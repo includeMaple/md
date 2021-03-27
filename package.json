@@ -1,0 +1,23 @@
+{
+  "name": "md-syntax-tree",
+  "version": "1.0.0",
+  "description": "markdown tree",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/includeMaple/md-tools-pl.git"
+  },
+  "keywords": [
+    "markdown",
+    "tree"
+  ],
+  "author": "includeMaple",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/includeMaple/md-tools-pl/issues"
+  },
+  "homepage": "https://github.com/includeMaple/md-tools-pl#readme"
+}
