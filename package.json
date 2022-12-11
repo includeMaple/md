@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/includeMaple/md-tools-pl/issues"
   },
-  "homepage": "https://github.com/includeMaple/md-tools-pl#readme"
+  "homepage": "https://github.com/includeMaple/md-tools-pl#readme",
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  }
 }
