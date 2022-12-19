@@ -1,79 +1,82 @@
 
 import { Stack } from "./stack";
 import { STRING_SPACE } from './configs';
+import { IStringSpace } from './iface';
 import { dealString } from "./utils";
 export class Render {
 
-  public rule = STRING_SPACE;
-  public stack = new Stack();
-  public html = '';
-  public objInfo = {};
-  public opt = {
-    title1: function (value, id) {
+  public rule: IStringSpace = STRING_SPACE;
+  public stack: Stack = new Stack();
+  public html: string = '';
+  public objInfo: any = {};
+  public bookInfo: unknown;
+  public tree: any;
+  public opt: any = {
+    title1: (value: string, id: string) => {
       return `<h1><a name="title-${id}"></a>${value}</h1>`
     },
-    title2: function (value, id) {
+    title2: function (value: string, id: string) {
       return `<h2><a name="title-${id}"></a>${value}</h2>`
     },
-    title3: function (value, id) {
+    title3: function (value: string, id: string) {
       return `<h3><a name="title-${id}"></a>${value}</h3>`
     },
-    title4: function (value, id) {
+    title4: function (value: string, id: string) {
       return `<h4><a name="title-${id}"></a>${value}</h4>`
     },
-    tilte5: function (value, id) {
+    tilte5: function (value: string, id: string) {
       return `<h5><a name="title-${id}"></a>${value}</h5>`
     },
-    title6: function (value, id) {
+    title6: function (value: string, id: string) {
       return `<h6><a name="title-${id}"></a>${value}</h6>`
     },
-    step: function (value, id) {
+    step: function (value: string, id: string) {
       return `<span class="step"><a name="step-${id}"></a>${value}</span>`
     },
-    bold: function (value) {
+    bold: function (value: string) {
       return `<strong>${value}</strong>`
     },
-    warning: function (value) {
+    warning: function (value: string) {
       return `<span class="star-warning">${value}</span>`
     },
-    danger: function (value) {
+    danger: function (value: string) {
       return `<span class="star-danger">${value}</span>`
     },
-    info: function (value) {
+    info: function (value: string) {
       return `<span class="star-info">${value}</span>`
     },
-    success: function (value) {
+    success: function (value: string) {
       return `<span class="star-success">${value}</span>`
     },
-    code: function (value) {
+    code: function (value: string) {
       return `<span class="star-code">${value}</span>`
     },
-    italic: function (value) {
+    italic: function (value: string) {
       return `<i>${value}</i>`
     },
-    spaceTwo: function (value) {
+    spaceTwo: (value: string) => {
       return `${this.rule.space}${this.rule.space}${value}`
     },
-    lineStar: function (value) {
+    lineStar: function (value: string) {
       return `<div class="line-star">${value}</div>`
     },
-    lineHorizontal: function (value) {
+    lineHorizontal: function (value: string) {
       return `<div class="line-horizotal">${value}</div>`
     },
-    codeLine: function (value) {
+    codeLine: function (value: string) {
       // https://github.com/highlightjs/highlight.js
       return `<pre><code>${value}</code></pre>`
     },
-    block: function (value) {
+    block: function (value: string) {
       return `<p>${value}</p>`
     },
-    content: function (value) {
+    content: function (value: string) {
       if (value[0] ==='\\') {
         return value.slice(1)
       }
       return value
     },
-    image: function (value) {
+    image: (value: string) => {
       if (value.indexOf('http') >= 0) {
         return `<img src="${value}"/>`
       }
@@ -85,7 +88,7 @@ export class Render {
       }
       return value
     },
-    hlink: function (value) {
+    hlink: function (value: string) {
       value = value.replace(/，/g,',')
       let arr = value.split(',')
       if (arr[1].indexOf('www') === 0) {
@@ -93,7 +96,7 @@ export class Render {
       }
       return `<a target="_blank" href="${arr[1]}">${arr[0]}</a>`
     },
-    table: function (value) {
+    table: (value: string) => {
       if (!value) return
       let arr = dealString.strToArr(value, this.rule.newline, '|')
       let tableContent = '<table>'
@@ -112,13 +115,13 @@ export class Render {
       tableContent += `</table>`
       return tableContent
     },
-    book: function (value) {
+    book: (value: any) => {
       if (!value) return
       let obj = dealString.strToJson(value)
       this.bookInfo = obj
       return ''
     },
-    annotated: function (value) {
+    annotated:  (value: any) => {
       return ''
     }
   }
@@ -193,15 +196,17 @@ export class Render {
     }
   }
 
-  constructor (public token: any, public data: any) {
-    this.stack.push(this.token)
+  constructor () {
+    // this.stack.push(this.token)
   }
 
-  setOptions (options) {
+  setOptions (options: any) {
     this.opt = Object.assign(this.opt, options)
   }
 
-  render (type) {
+  render (tree: any, type?: string) {
+    this.tree = tree;
+    this.stack.push(tree)
     while (!this.stack.isEmpty()) {
       let curToken = this.stack.pop()
       if (!curToken.isLeaf) {
@@ -216,10 +221,11 @@ export class Render {
       }
       curToken.html = this.renderLeaf(curToken, type)
     }
-    this.html = this.token.html
+    this.html = this.tree.html
+    return this.tree.html;
   }
 
-  renderLeaf = function (token, type='markdown') {
+  renderLeaf (token: any, type='markdown') {
     // 作为叶子的token有这么几种情况：
     // 1、type是block，里面就是content
     // 2、type是token，里面就是规则加content
