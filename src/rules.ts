@@ -1,88 +1,24 @@
 
-import { STRING_SPACE, RULE_OPTIONS } from './configs';
-import { IStringSpace, IRuleOptions, IRuleInfoItem, TRuleType } from './iface';
+import { RULE_SPACE, RULE_OPTIONS } from './configs';
+import { IRuleSpace, IRuleOptions, IRuleMap, IRuleEndMap, TRuleType, IRuleMapItem } from './iface';
 
 export class Rules {
-  public rule: IStringSpace = STRING_SPACE;
+  // 配置文件配置的规则
   private options: IRuleOptions = RULE_OPTIONS;
-  public ruleMap: {[key: string]: IRuleInfoItem[]} = {}
-  // public endToStart: any = {}
+  // 换行、转移、间隔符
+  public space: IRuleSpace = RULE_SPACE;
+  // 将options清洗成下面两种，用于token生成tree
+  public ruleMap: IRuleMap = {};
+  public ruleEndMap: IRuleEndMap = {};
   constructor () {
     this.washOptions();
-  }
-
-  /**
-   * set string_space rules
-   * @param rules 
-   */
-  setRules (rules: IStringSpace) {
-    this.rule = Object.assign(this.rule, rules)
-  }
-
-  /**
-   * set rule options
-   * @param opt 
-   */
-  setOptions (opt: IRuleOptions) {
-    this.options = Object.assign(this.options, opt)
-  }
-
-  washEndInfo (k: string, type: TRuleType, useKey: 'start'|'end') {
-    let isBlock = (this.options[k]['end'] && this.options[k]['end'].indexOf(this.rule.newline) >= 0) || this.options[k].isBlock;
-    let firstWord = this.options[k][useKey][0];
-
-    let ruleInfo: IRuleInfoItem = {
-      type: type,
-      data: this.options[k][useKey],
-      len: this.options[k][useKey].length,
-      isBlock: isBlock || false,
-      key: k,
-      isAtom: this.options[k].isAtom || false,
-    }
-
-    if (firstWord in this.ruleMap) {
-      this.ruleMap[firstWord].push(ruleInfo);
-    } else {
-      this.ruleMap[firstWord] = [ruleInfo];
-    }
-
-
-    // let isBlock = (this.options[k]['end'] && this.options[k]['end'].indexOf(this.rule.newline) >= 0) || this.options[k].isBlock
-    // (this.options[k]['startEnd'] && this.options[k]['startEnd'].indexOf(this.rule.newline) >= 0) ||
-    //   (this.options[k]['start'] && this.options[k]['start'].indexOf(this.rule.newline) >= 0) ||
-    //   (this.options[k]['start'] && this.options[k]['startEnd'].isBlock)
-    // if (this.options[k]['end'] || this.options[k]['startEnd']) {
-    //   let startType = this.options[k].start || this.options[k].startEnd
-    //   let endType = this.options[k].end || this.options[k].startEnd
-    //   if (Object.prototype.hasOwnProperty.call(this.endToStart, endType)) {
-    //     if (this.endToStart[endType].indexOf(startType) < 0) {
-    //       this.endToStart[endType].push(startType)
-    //     }
-    //   } else {
-    //     this.endToStart[endType] = [startType]
-    //   }
-    // }
-    // let endInfo = {
-    //   type: type,
-    //   data: this.options[k][useKey],
-    //   len: this.options[k][useKey].length,
-    //   isBlock: isBlock,
-    //   key: k,
-    //   isAtom: this.options[k].isAtom
-    // }
-    // let first = this.options[k][useKey][0]
-    // if (!Object.prototype.hasOwnProperty.call(this.ruleMap, first)) {
-    //   this.ruleMap[first] = [endInfo]
-    // } else {
-    //   this.ruleMap[first].push(endInfo)
-    // }
   }
 
   /**
    * wash rule options
    * @returns 
    */
-  washOptions () {
+   washOptions () {
     for(let k in this.options) {
       if (this.options[k]['start'] === this.options[k]['end']) {
         this.washEndInfo(k, 'startEnd', 'start')
@@ -97,6 +33,50 @@ export class Rules {
         return two.len - one.len
       })
     }
-    return this.ruleMap
+  }
+
+  washEndInfo (k: string, type: TRuleType, useKey: 'start'|'end') {
+    let isBlock = (this.options[k]['end'] && this.options[k]['end'].indexOf(this.space.newline) >= 0) || this.options[k].isBlock;
+    let firstWord = this.options[k][useKey][0];
+    let data = this.options[k][useKey];
+    // 生成ruleMap
+    let ruleInfo: IRuleMapItem = {
+      type: type,
+      data: data,
+      len: data.length,
+      isBlock: isBlock || false,
+      key: k,
+      isAtom: this.options[k].isAtom || false, // 这个是做啥来着，todo
+    }
+    if (firstWord in this.ruleMap) {
+      this.ruleMap[firstWord].push(ruleInfo);
+    } else {
+      this.ruleMap[firstWord] = [ruleInfo];
+    }
+    // 生成ruleEndMap
+    if (type !== 'start' && Object.prototype.hasOwnProperty.call(this.ruleEndMap, k)) {
+      if (this.ruleEndMap[k].indexOf(k) < 0) {
+        this.ruleEndMap[k].push(data);
+      }
+    } else {
+      this.ruleEndMap[k] = [data];
+    }
+  }
+  /**
+   * set RULE_SPACE rules
+   * @param rules 
+   */
+   setRules (rules: IRuleSpace) {
+    this.space = Object.assign(this.space, rules)
+  }
+
+  /**
+   * set rule options
+   * @param opt 
+   */
+  setOptions (opt: IRuleOptions) {
+    this.options = Object.assign(this.options, opt)
   }
 }
+
+export let rules = new Rules();

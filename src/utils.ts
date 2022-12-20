@@ -1,6 +1,6 @@
 
 export let dealString = {
-  strToArr: function (str, in1=',', in2=':') {
+  strToArr: function (str: string, in1=',', in2=':') {
     let arr = []
     arr = str.split(in1)
     for (let i=0; i<arr.length; i++) {
