@@ -3,3 +3,5 @@ node_modules/
 dist/
 package-lock.json
 compile
+/test/md/*
+/test/html/*
