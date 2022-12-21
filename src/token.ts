@@ -1,17 +1,16 @@
 
 import { Stack, StackOne } from './stack';
-import { RULE_SPACE } from './configs';
-import { IRuleSpace, IRuleMap, ITokenItem, TTokenType, IRuleEndMap, ITreeNode } from './iface';
+import { IRuleMap, ITokenItem, IRuleEndMap, ITreeNode } from './iface';
+import { toolbox } from './utils';
 import { Rules } from './rules';
 export class Token {
-  public ruleSpace: IRuleSpace = RULE_SPACE;
+  public rules: Rules = new Rules()
   public document = '';
   private token: ITokenItem[] = [];
   private tree: ITreeNode[] = [];
 
-  constructor (public rules: Rules) {
-    this.ruleSpace = this.rules.space;
-  }
+  constructor () {}
+
 
   getToken (document: string) {
     // 初始化
@@ -23,11 +22,15 @@ export class Token {
     return this.tree;
   }
 
+  setRule (rules: Rules) {
+    this.rules = rules;
+  }
+
   /**
    * 词法解析，生成token流
    * @param ruleMap 
    */
-  toknStream () {
+  private toknStream () {
     let ruleMap: IRuleMap = this.rules.ruleMap;
     this.token = [];
     // 上次扫描到的位置
@@ -36,7 +39,7 @@ export class Token {
     for (let i=0; i<this.document.length; i++) {
       let s = this.document[i];
       // 转义字符处理
-      if (s === this.ruleSpace.escape) {
+      if (s === this.rules.space.escape) {
         i += 1;
         continue;
       }
@@ -56,7 +59,7 @@ export class Token {
               data: this.document.substring(lastPoint, i),
               key: 'content',
               isBlock: false,
-              id: this.getId()
+              id: toolbox.generateId()
             })
           }
           this.token.push({
@@ -64,7 +67,7 @@ export class Token {
             data: docMayToken,
             key: rule[j].key,
             isBlock: rule[j].isBlock ? true : false,
-            id: this.getId()
+            id: toolbox.generateId()
           })
           lastPoint = i + rule[j].len;
           i = lastPoint - 1;
@@ -78,20 +81,25 @@ export class Token {
         data: this.document.substring(lastPoint, this.document.length),
         key: 'content',
         isBlock: false,
-        id: this.getId()
+        id: toolbox.generateId()
       })
     }
     return this.token;
   }
 
-  tokenTree () {
+  private tokenTree () {
     let ruleEndMap: IRuleEndMap = this.rules.ruleEndMap;
     let stackOne = new StackOne(this.token);
     let startEndStack = new Stack();
-    stackOne.wash((item: ITokenItem) => {
+    stackOne.wash((i, t) => {
+      let item = i as ITokenItem;
+      let top = t as ITreeNode;
       if (item.type === 'start' || item.type === 'content') {
         return true;
       } else if (item.type === 'end') {
+        if (top.type === 'block' && item.data === this.rules.space.newline) {
+          return true;
+        }
         return false;
       }
       // startEnd的情况
@@ -102,33 +110,37 @@ export class Token {
       }
       startEndStack.push(item);
       return true;
-    }, (item: ITokenItem)=> {
-      if (item.type === 'start' || item.type === 'startEnd') {
-        if (ruleEndMap[item.key].indexOf(item.data) > -1) {
-          return false
+    }, (i, top) => {
+      let t = top as any;
+      let it = i as ITokenItem;
+      if (t.type === 'block' && it.isBlock) {
+        return false;
+      }
+      if (t.type === 'start' || t.type === 'startEnd') {
+        if (ruleEndMap[t.key].indexOf(t.data) > -1) {
+          return false;
         }
-        return false
+        return false;
       }
       return true;
-    }, (item: ITokenItem) => {
+    }, (i) => {
+      let item = i as ITokenItem;
       let node: ITreeNode = {
         key: item.key,
         type: item.isBlock ? 'block' : 'content',
-        id: this.getId(),
+        id: toolbox.generateId(),
+        value: '',
         children: [{
           key: item.key,
-          type: item.isBlock ? 'block' : 'content',
+          type: item.type === 'content' ? (item.isBlock ?'block' : 'content') : 'keyword',
           data: item.data,
-          id: this.getId()
+          id: toolbox.generateId(),
+          value: ''
         }]
       }
-      return node;
+      return node as {children: unknown[]};
     })
     this.tree = stackOne.stackData.getData() as ITreeNode[];
     return this.tree;
-  }
-
-  getId () {
-    return `${Math.floor(Math.random() * 1000)}-${Math.floor(Math.random() * 1000)}-${Math.floor(Math.random() * 1000)}`
   }
 }

@@ -14,13 +14,8 @@ export class Stack {
     this.data = arr;
   }
 
-  isFull () {
-    return this.top === this.max - 1;
-  }
-
-  isEmpty () {
-    return this.top === -1;
-  }
+  isFull () { return this.top === this.max - 1; }
+  isEmpty () { return this.top === -1; }
 
   /**
    * 入栈
@@ -88,11 +83,11 @@ export class StackOne {
    * @param stopInFn true继续，false停止，控制stackData的push，false的时候进行升树操作
    * @param stopOutFn true继续，false停止，stackData.pop(),true继续pop，false停止push入stackTree
    */
-  wash (stopInFn: (itemData: unknown)=> boolean,
-  stopOutFn: (itemData: unknown)=> boolean,
-  generateNode: (itemData: unknown) => {children: unknown[]}) {
+  wash (stopInFn: (itemData: unknown, top: unknown)=> boolean,
+    stopOutFn: (itemData: unknown, top: unknown)=> boolean,
+    generateNode: (itemData: unknown) => {children: unknown[]}) {
     this.data.forEach((item: unknown) => {
-      if (stopInFn(item)) {
+      if (stopInFn(item, this.stackData.getTop())) {
         this.stackData.push(item);
       } else {
         this.getTreeNode(item, stopOutFn, generateNode);
@@ -111,7 +106,8 @@ export class StackOne {
    * token变成tree
    * @param stopOutFn true继续，false停止
    */
-  getTreeNode (item: unknown, stopOutFn: (itemData: unknown)=> boolean,
+  getTreeNode (item: unknown,
+    stopOutFn: (itemData: unknown, top: unknown)=> boolean,
     generateNode: (itemData: unknown) => {children: unknown[]}) {
     let node: {children: unknown[]} = generateNode(item);
     while (true) {
@@ -122,7 +118,7 @@ export class StackOne {
         return;
       }
       node.children.unshift(top);
-      if (!stopOutFn(top)) {
+      if (!stopOutFn(item, top)) {
         this.stackData.push(node);
         return;
       }

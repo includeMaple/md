@@ -1,50 +1,52 @@
 import { Rules } from './rules';
 import { Token } from './token';
 import { Render } from './render';
-class Markdown {
+export class MdC {
   public rule: Rules = new Rules();
-  public token: Token = new Token(this.rule);
-  public title: string = '';
-  public render: Render = new Render();
-  public bookInfo: unknown;
+  private token: Token = new Token();
+  private render: Render = new Render();
 
-  constructor (document: string) {
+  constructor () {}
+
+  exec (document: string) {
+    this.rule.generate();
+    this.token.setRule(this.rule);
     let tree = this.token.getToken(document);
-    let html = this.render.render(tree);
-    console.log(html)
+
+    this.render.setRules(this.rule);
+    // 将抽象语法树渲染回指定文本
+    return this.render.render(tree);
+  }
+  /**
+   * 将md转换为html
+   * @param document 
+   * @returns 
+   */
+  toHtml (document: string) {
+    this.rule.setRules({docType: 'html'});
+    return this.exec(document);
   }
 
-  setRules (rules: any) {
-    this.rule.setRules(rules)
-  }
-
-  setOptions (options: any) {
-    this.rule.setOptions(options)
-  }
-
-  setRender (options: any) {
-    this.render.setOptions(options)
-  }
-
-  mark (value: any, data: any) {
-    let token = this.token.getToken(value, this.rule)
-    this.render = new Render(token, data)
-    this.render.render()
-    // title
-    this.title = this.getTitle(this.token.title)
-    this.bookInfo = this.render.bookInfo
-    return this.render.html
-  }
-
-  getTitle (arr: any) {
-    let html = ''
-    for (let i=0; i<arr.length; i++) {
-      html += arr[i].anchor
-    }
-    return html
+  /**
+   * 将md转换为text
+   * @param document 
+   */
+  toText (document: string) {
+    this.rule.setRules({docType: 'text'});
+    return this.exec(document)
   }
 }
 let doc = `# 想00**009**99
 
 1. 默认有可插拔插件，直接先配置上去`
-let markdown = new Markdown(doc)
+let markdown = new MdC();
+// 设置规则
+markdown.rule.setRules({
+  docType: 'html',
+  mdType: 'normal',
+  // title: ['title1']
+  // options: {}
+})
+
+let res = markdown.toHtml(doc);
+console.log(res)
