@@ -10,7 +10,8 @@ export interface IRuleOptionsInfo {
   desc?: string,
   titleList?: string[],
   // 需要根据配置动态加载换行和空格等
-  options: (ruleSpace: IRuleSpace) => IRuleOptions
+  options: (ruleSpace: IRuleSpace) => IRuleOptions,
+  blankline?: () => string
 }
 // 配置项
 export interface IRuleOptions {
@@ -43,7 +44,7 @@ export interface IRuleEndMap {
 
 export type TTokenType = 'start'|'end'|'content'|'startEnd';
 export interface ITokenItem {
-  type: TTokenType,
+  tokenType: TTokenType, // token type，根据type而来，关键字之外添加content
   data: string,
   key: string,
   isBlock: boolean,
@@ -52,7 +53,8 @@ export interface ITokenItem {
 
 export type TTreeType = 'content'|'block'|'keyword';
 export interface ITreeNode {
-  type: TTreeType,
+  tokenType: TTokenType, // token type，根据type而来，关键字之外添加content
+  nodeType: TTreeType, // 节点类型，将所有类型归为 内容content 换行block 关键字
   children?: ITreeNode[],
   key: string,
   data?: string,

@@ -15,22 +15,7 @@ export class Render {
     // 使用树的深度优先遍历的后序遍历生成value
     let processList: ITreeNode[]  = this.treeWalk.postorder(data);
     processList.forEach((item: ITreeNode) => {
-      if (item.children) {
-        if (item.key in this.rules.options || item.key === 'content') {
-          item.value = this.getChildrenValue(item)
-          let renderFn = this.rules.options[item.key]?.render || DEFAULT_RENDER_FN;
-          item.value = renderFn(item);
-        }
-      } else {
-        // 这里的叶子节点实际没有完全修改完type（主要为了stack的通用性，改掉了最后一个，但没改前面的）
-        if (item.type !== 'content' && item.type !== 'block') {
-          item.type = 'keyword';
-          item.value = '';
-        }
-        if (item.type == 'content') {
-          item.value = item.data || '';
-        }
-      }
+      this.renderItem(item);
     })
     let res = processList[processList.length - 1].value;
     // 生成标题
@@ -65,5 +50,23 @@ export class Render {
       str += i.value;
     })
     return str;
+  }
+
+  /**
+   * 渲染节点
+   * @param item 
+   * @return string
+   */
+  private renderItem (item: ITreeNode) {
+    // 非叶子节点并且配置渲染方式的内容
+    if (item.children && (item.key in this.rules.options || item.key === 'content')) {
+      item.value = this.getChildrenValue(item)
+      let renderFn = this.rules.options[item.key]?.render || DEFAULT_RENDER_FN;
+      item.value = renderFn(item);
+    } else if (!item.children && item.data === this.rules.space.newline) { // 叶子节点, 并且是空行
+      item.value = this.rules.blanklineFn()
+    } else if (item.nodeType === 'content') {
+      item.value = item.data || '';
+    }
   }
 }

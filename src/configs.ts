@@ -62,14 +62,6 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
           return `<strong>${item.value}</strong>`
         },
       },
-      code: {
-        start: '@@code ',
-        end: '@@',
-        isAtom: true,
-        render: function (item: ITreeNode) {
-          return `<span class="star-code">${item.value}</span>`
-        },
-      },
       italic: {
         start: '~~',
         end: '~~',
@@ -102,7 +94,6 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '```',
         end: '```',
         isAtom: true,
-        isBlock: true,
         render: function (item: ITreeNode) {
           // https://github.com/highlightjs/highlight.js
           return `<pre><code>${item.value}</code></pre>`
@@ -165,6 +156,9 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         },
       },
     }
+  },
+  blankline: () => {
+    return `<div></div>`
   }
 }
 

@@ -25,6 +25,9 @@ export class Rules {
   // 将options清洗成下面两种，用于token生成tree
   public ruleMap: IRuleMap = {};
   public ruleEndMap: IRuleEndMap = {};
+  public blanklineFn: () => string = () => {
+    return this.space.newline
+  }
   constructor () {}
 
   public generate () {
@@ -32,11 +35,13 @@ export class Rules {
     let optionsInfo: IRuleOptionsInfo = this.docType === 'html' ? MD_NORMAL_BASE : MD_NORMAL_TEXT;
     this.options = optionsInfo.options(this.space);
     this.titleList = optionsInfo.titleList || [];
+    if (optionsInfo.blankline) { this.blanklineFn = optionsInfo.blankline;}
     // 2. 根据mdType确定是否需要添加配置
     if (this.mdType === 'ex') {
       let optionsInfoEx: IRuleOptionsInfo = this.docType === 'html' ? MD_EX_BASE : MD_EX_TEXT;
       this.titleList = optionsInfoEx.titleList ? optionsInfoEx.titleList : this.titleList;
       this.mergeOptions(this.options, optionsInfoEx.options(this.space));
+      if (optionsInfoEx.blankline) { this.blanklineFn = optionsInfoEx.blankline;}
     }
     // 3. 根据用户配置刷新最后的配置
     if (this.isReplace && this.customOptions) {
@@ -65,6 +70,7 @@ export class Rules {
     this.docType = rules.docType ? rules.docType : 'html';
     this.mdType = rules.mdType ? rules.mdType : 'normal';
     this.titleList = rules.titleList ? rules.titleList : this.titleList;
+    this.blanklineFn = rules.blankline ? rules.blankline : this.blanklineFn;
   }
   /**
    * wash rule options

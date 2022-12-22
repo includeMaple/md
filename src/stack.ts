@@ -1,5 +1,6 @@
 import { ITreeNode } from "./iface";
 
+// stack
 export class Stack {
   public top = -1;
   public data: unknown[] = [];
@@ -63,8 +64,7 @@ export class Stack {
    */
   initData (data: unknown) {
     if (Array.isArray(data)) {
-      this.data = data;
-      this.top = this.data.length - 1;
+      this.create(data);
     } else {
       this.data = [data];
       this.top = 0;
@@ -72,39 +72,33 @@ export class Stack {
   }
 }
 
-export class StackOne {
+// 栈的一种应用，将token stream转换为token tree
+export class Stream2tree {
   public stackData: Stack = new Stack();
-  // public stackTree: Stack = new Stack();
-
   constructor (public data: unknown[]) {}
 
   /**
    * 清洗token遍历
-   * @param stopInFn true继续，false停止，控制stackData的push，false的时候进行升树操作
-   * @param stopOutFn true继续，false停止，stackData.pop(),true继续pop，false停止push入stackTree
+   * @param stopInFn true继续入栈，false停止入栈进行升树操作，等升成树后再入栈，控制stackData的push
+   * @param stopOutFn true继续出栈升级别，false停止（将父节点push回stackData），控制升级
    */
   wash (stopInFn: (itemData: unknown, top: unknown)=> boolean,
     stopOutFn: (itemData: unknown, top: unknown)=> boolean,
     generateNode: (itemData: unknown) => {children: unknown[]}) {
+    // 循环遍历stream token，要判断的是，什么时候入栈什么时候升级别
     this.data.forEach((item: unknown) => {
       if (stopInFn(item, this.stackData.getTop())) {
-        this.stackData.push(item);
+        this.stackData.push(item); // 入栈
       } else {
-        this.getTreeNode(item, stopOutFn, generateNode);
+        this.getTreeNode(item, stopOutFn, generateNode); // 升级别
+        console.log(item)
       }
     })
-    // 接受剩余内容
-    let top = this.stackData.pop();
-    if (top) {
-      this.getTreeNode(top, () => {
-        return true;
-      }, generateNode)
-    }
   }
 
   /**
-   * token变成tree
-   * @param stopOutFn true继续，false停止
+   * 出栈变成children并添加父节点，需要考虑的是什么时候停止出栈
+   * @param stopOutFn true继续出栈，false停止出栈
    */
   getTreeNode (item: unknown,
     stopOutFn: (itemData: unknown, top: unknown)=> boolean,
@@ -126,6 +120,7 @@ export class StackOne {
   }
 }
 
+// stack的一种应用，树的深度优先遍历
 export class TreeWalk {
   public stack = new Stack();
 
@@ -145,7 +140,7 @@ export class TreeWalk {
 
       if (top.children) {
         for (let i= top.children.length-1; i>-1; i--) {
-          this.stack.push(top.children[i])
+          this.stack.push(top.children[i]);
         }
       }
     }
@@ -153,7 +148,7 @@ export class TreeWalk {
   }
 
   /**
-   * inorder tree walk 树的深度优先遍历的中序遍历
+   * inorder tree walk 树的深度优先遍历的中序遍历 todo
    * @param data 
    */
   inorder (data: unknown) {
@@ -174,7 +169,7 @@ export class TreeWalk {
 
       if (top.children) {
         for (let i=0; i<top.children.length; i++) {
-          this.stack.push(top.children[i])
+          this.stack.push(top.children[i]);
         }
       }
     }
