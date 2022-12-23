@@ -42,6 +42,8 @@ export class Token {
     this.token = [];
     // 上次扫描到的位置
     let lastPoint: number = 0;
+    let atomDataNum = 0; // 标识是否设置autodata，第一次遇到要设置，第二次遇到要不设置
+    let atomData = ''; // autodata
     // 扫描文档流
     for (let i=0; i<this.document.length; i++) {
       let s = this.document[i];
@@ -56,7 +58,15 @@ export class Token {
         let rule = ruleMap[s];
         for (let j=0; j< rule.length; j++) {
           let docMayToken = this.document.substring(i, i+rule[j].len);
-          if ( docMayToken !== rule[j].data) {
+          if (docMayToken !== rule[j].data) {
+            continue;
+          }
+          // 等于的情况中，要挑出atom的情况，奇数进入原子期，期间直到找到下一个原子才能停止
+          if (rule[j].isAtom) {
+            atomDataNum += 1;
+            atomData = rule[j].data;
+          }
+          if (atomDataNum % 2 === 1 && (rule[j].data !== atomData)) {
             continue;
           }
           // 存入之前的内容
@@ -73,7 +83,7 @@ export class Token {
             tokenType: rule[j].type,
             data: docMayToken,
             key: rule[j].key,
-            isBlock: rule[j].isBlock ? true : false,
+            isBlock: rule[j].isBlock || false,
             id: toolbox.generateId()
           })
           lastPoint = i + rule[j].len;
