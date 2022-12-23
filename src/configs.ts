@@ -69,7 +69,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
           return `<i>${item.value}</i>`
         },
       },
-      spaceTwo: {
+      spaceTwo: { // todo
         start: '>',
         end: ruleSpace.newline,
         render: (item: ITreeNode) => {
@@ -98,6 +98,42 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
           // https://github.com/highlightjs/highlight.js
           return `<pre><code>${item.value}</code></pre>`
         },
+      },
+      orderList: {
+        start: '1. ',
+        end: ruleSpace.newline,
+        isList: true,
+        render: function (item: ITreeNode) {
+          if (!item.isList) {
+            item.value = '';
+            item.children?.forEach((i) => {
+              item.value += i.value;
+            })
+            return `<ul>${item.value}</ul>`;
+          }
+          if (item.children && item.children.length > 1) {
+            return `<li>${item.children[1].value}</li>`;
+          }
+          return `<li>${item.value}</li>`;
+        }
+      },
+      list: { // 无序列表
+        start: '* ',
+        end: ruleSpace.newline,
+        isList: true,
+        render: function (item: ITreeNode) {
+          if (!item.isList) {
+            item.value = '';
+            item.children?.forEach((i) => {
+              item.value += i.value;
+            })
+            return `<ol>${item.value}</ol>`;
+          }
+          if (item.children && item.children.length > 1) {
+            return `<li>${item.children[1].value}</li>`;
+          }
+          return `<li>${item.value}</li>`;
+        }
       },
       image: {
         start: '[image](',

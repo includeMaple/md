@@ -20,6 +20,7 @@ export interface IRuleOptions {
     end: string,
     isAtom?: boolean, // 原子性，表示不可切割，内部不论匹配到什么情况，不找到结束标志不创造token
     isBlock?: boolean, // 元素内部是否可换行，true表示可换行
+    isList?: boolean, // 是否和前后作为一个组
     render?: (item: ITreeNode) => string
   }
 }
@@ -34,6 +35,7 @@ export interface IRuleMapItem {
   isBlock: boolean,
   key: string,
   isAtom: boolean,
+  isList: boolean
 }
 export interface IRuleMap {
   [key: string]: IRuleMapItem[]
@@ -48,7 +50,9 @@ export interface ITokenItem {
   data: string,
   key: string,
   isBlock: boolean,
-  id: string
+  id: string,
+  isList: boolean,
+  isStartList?: boolean,
 }
 
 export type TTreeType = 'content'|'block'|'keyword';
@@ -59,7 +63,9 @@ export interface ITreeNode {
   key: string,
   data?: string,
   id: string,
-  value: string
+  value: string,
+  isStartList?: boolean,
+  isList?: boolean
 }
 
 export interface IRenderOption {

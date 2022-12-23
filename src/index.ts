@@ -38,9 +38,14 @@ export class MdC {
   }
 }
 let doc = `
+1. ccc
+1. ddd
 
+* ee
+* 8878
 
-` + '```**cc** let cc = bb;```'
+`
+// ` + '```**cc** let cc = bb;```'
 let markdown = new MdC();
 // 设置规则
 markdown.rule.setRules({

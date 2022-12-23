@@ -76,7 +76,8 @@ export class Token {
               data: this.document.substring(lastPoint, i),
               key: 'content',
               isBlock: false,
-              id: toolbox.generateId()
+              id: toolbox.generateId(),
+              isList: false
             })
           }
           this.token.push({
@@ -84,7 +85,8 @@ export class Token {
             data: docMayToken,
             key: rule[j].key,
             isBlock: rule[j].isBlock || false,
-            id: toolbox.generateId()
+            id: toolbox.generateId(),
+            isList: rule[j].isList
           })
           lastPoint = i + rule[j].len;
           i = lastPoint - 1;
@@ -98,7 +100,8 @@ export class Token {
         data: this.document.substring(lastPoint, this.document.length),
         key: 'content',
         isBlock: false,
-        id: toolbox.generateId()
+        id: toolbox.generateId(),
+        isList: false,
       })
     }
     return this.token;
@@ -108,7 +111,28 @@ export class Token {
     let ruleEndMap: IRuleEndMap = this.rules.ruleEndMap;
     let stream2tree = new Stream2tree(this.token);
     let startEndStack = new Stack();
-    stream2tree.wash((i, t) => {
+    stream2tree.wash((i, t) => { // isGenerateStackNode
+        let item: ITreeNode = i as ITreeNode; // 实际也可能是ITokenNode
+        let top: undefined|ITreeNode = t as (undefined|ITreeNode); // 实际也可能是ITokenNode
+        if (!top) { return false; }
+        return (top.isList && top.children && item.key !== top?.key) || false;
+      }, (i, t) => { // isStopGenerateStackNode
+        let item: ITreeNode = i as ITreeNode;
+        let top: ITreeNode = t as ITreeNode;
+        return item.key !== top.key;
+      }, (i) => { // gennerateStackNode
+        let item = i as ITreeNode;
+        let node: ITreeNode = {
+          key: item.key,
+          tokenType: item.tokenType,
+          nodeType: item.nodeType,
+          id: toolbox.generateId(),
+          value: '',
+          isList: false,
+          children: [item]
+        }
+        return node as {children: unknown[]};
+      }, (i, t) => {
       let item = i as ITokenItem; // item 一定是token
       let top = t as undefined|ITokenItem|ITreeNode;
       if (item.tokenType === 'start' || item.tokenType === 'content') { return true; }
@@ -132,6 +156,7 @@ export class Token {
     }, (i, top) => { // 应该把这里的top都升为ITreeNode
       let t = this.token2treeNode(top) as ITreeNode;
       let it: ITreeNode = (this.token2treeNode(i) as ITreeNode);
+      // if (t.isStartList) { return false; }
       // block的级别比较高，所以当top是block的时候停止pop，结束本次升树操作
       if (t.nodeType === 'block' && it.nodeType === 'block') {
         return false;
@@ -150,16 +175,24 @@ export class Token {
         nodeType: item.isBlock ? 'block' : 'content',
         id: toolbox.generateId(),
         value: '',
+        isList: item.isList || false,
         children: [{
           key: item.key,
           tokenType: item.tokenType,
           nodeType: item.tokenType === 'content' ? (item.isBlock ?'block' : 'content') : 'keyword',
           data: item.data,
           id: toolbox.generateId(),
-          value: ''
+          value: '',
+          isList: item.isList || false,
         }]
       }
       return node as {children: unknown[]};
+    }, (i) => { // 升树前对node进行更新
+      let item: ITreeNode = i as ITreeNode;
+      if (item.children && item.children.length > 0) {
+        item.key = item.children[0].key; // 开始的key和isList才是最准确的
+        item.isList = item.children[0].isList;
+      }
     })
     this.tree = stream2tree.stackData.getData() as ITreeNode[];
     return this.tree;

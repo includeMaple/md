@@ -105,7 +105,8 @@ export class Rules {
       len: data.length,
       isBlock: isBlock || false,
       key: k,
-      isAtom: this.options[k].isAtom || false, // 这个是做啥来着，todo
+      isAtom: this.options[k].isAtom || false,
+      isList: this.options[k].isList || false,
     }
     if (firstWord in this.ruleMap) {
       this.ruleMap[firstWord].push(ruleInfo);

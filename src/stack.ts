@@ -82,15 +82,26 @@ export class Stream2tree {
    * @param stopInFn true继续入栈，false停止入栈进行升树操作，等升成树后再入栈，控制stackData的push
    * @param stopOutFn true继续出栈升级别，false停止（将父节点push回stackData），控制升级
    */
-  wash (stopInFn: (itemData: unknown, top: unknown)=> boolean,
+  wash (
+    isGenerateStackNode: (itemData: unknown, top: unknown)=> boolean, // 是否对stack进行升树操作
+    isStopGenerateStackNode: (itemData: unknown, top: unknown) => boolean, // 是否停止对stack进行升树操作
+    gennerateStackNode: (itemData: unknown) => {children: unknown[]}, // 生成node
+    stopInFn: (itemData: unknown, top: unknown)=> boolean,
     stopOutFn: (itemData: unknown, top: unknown)=> boolean,
-    generateNode: (itemData: unknown) => {children: unknown[]}) {
+    generateNode: (itemData: unknown) => {children: unknown[]},
+    updateNode: (itemData: unknown) => void) {
     // 循环遍历stream token，要判断的是，什么时候入栈什么时候升级别
     this.data.forEach((item: unknown) => {
-      if (stopInFn(item, this.stackData.getTop())) {
+      let top = this.stackData.getTop();
+      // 是否需要对stack内的内容进行升树操作（不包含item）
+      if (isGenerateStackNode(item, top)) {
+        this.getStackNode(isStopGenerateStackNode, gennerateStackNode);
+      }
+      // 是否要进行升树操作（包含item）
+      if (stopInFn(item, top)) {
         this.stackData.push(item); // 入栈
       } else {
-        this.getTreeNode(item, stopOutFn, generateNode); // 升级别
+        this.getTreeNode(item, stopOutFn, generateNode, updateNode); // 升级别
         console.log(item)
       }
     })
@@ -102,7 +113,8 @@ export class Stream2tree {
    */
   getTreeNode (item: unknown,
     stopOutFn: (itemData: unknown, top: unknown)=> boolean,
-    generateNode: (itemData: unknown) => {children: unknown[]}) {
+    generateNode: (itemData: unknown) => {children: unknown[]},
+    updateNode: (itemData: unknown) => void) {
     let node: {children: unknown[]} = generateNode(item);
     while (true) {
       let top = this.stackData.pop();
@@ -113,10 +125,28 @@ export class Stream2tree {
       }
       node.children.unshift(top);
       if (!stopOutFn(item, top)) {
+        updateNode(node); // 插入前更新下
         this.stackData.push(node);
         return;
       }
     }
+  }
+
+  getStackNode (
+    isStopGenerateStackNode: (itemData: unknown, top: unknown) => boolean,
+    gennerateStackNode: (itemData: unknown) => {children: unknown[]},) {
+    let item: unknown = this.stackData.pop();
+    let node: {children: unknown[]} = gennerateStackNode(item);
+    while (true) {
+      let ttop = this.stackData.getTop();
+      if (!ttop) { break; }
+      if (isStopGenerateStackNode(item, ttop)) {
+        break;
+      }
+      this.stackData.pop();
+      node.children.push(ttop);
+    }
+    this.stackData.push(node);
   }
 }
 
