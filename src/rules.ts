@@ -1,6 +1,6 @@
 
 import { RULE_SPACE, MD_NORMAL_BASE, MD_EX_BASE, MD_NORMAL_TEXT, MD_EX_TEXT } from './configs';
-import { IRuleSpace, IRuleOptions, IRuleOptionsInfo, IRuleMap, IRuleEndMap, TRuleType, IRuleMapItem, } from './iface';
+import { IRuleSpace, IRuleOptions, IRuleOptionsInfo, IRuleMap, IRuleEndMap, TRuleType, IRuleMapItem, ITreeNode, } from './iface';
 import {  TDocType, TMdType, ruleOptions } from './ttype';
 
 /**
@@ -25,7 +25,7 @@ export class Rules {
   // 将options清洗成下面两种，用于token生成tree
   public ruleMap: IRuleMap = {};
   public ruleEndMap: IRuleEndMap = {};
-  public blanklineFn: () => string = () => {
+  public blanklineFn: (item: ITreeNode, ruleSpace: IRuleSpace, isRootLine?: boolean) => string = () => {
     return this.space.newline
   }
   constructor () {}

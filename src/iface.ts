@@ -11,13 +11,14 @@ export interface IRuleOptionsInfo {
   titleList?: string[],
   // 需要根据配置动态加载换行和空格等
   options: (ruleSpace: IRuleSpace) => IRuleOptions,
-  blankline?: () => string
+  blankline?: (item: ITreeNode, ruleSpace: IRuleSpace, isRootLine?: boolean) => string
 }
 // 配置项
 export interface IRuleOptions {
   [key: string]: {
     start: string,
     end: string,
+    status?: string[],
     isAtom?: boolean, // 原子性，表示不可切割，内部不论匹配到什么情况，不找到结束标志不创造token
     isBlock?: boolean, // 元素内部是否可换行，true表示可换行
     isList?: boolean, // 是否和前后作为一个组
@@ -65,7 +66,8 @@ export interface ITreeNode {
   id: string,
   value: string,
   isStartList?: boolean,
-  isList?: boolean
+  isList?: boolean,
+  isRootLine?: boolean
 }
 
 export interface IRenderOption {

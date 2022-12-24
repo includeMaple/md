@@ -103,6 +103,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '1. ',
         end: ruleSpace.newline,
         isList: true,
+        isBlock: true,
         render: function (item: ITreeNode) {
           if (!item.isList) {
             item.value = '';
@@ -121,6 +122,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '* ',
         end: ruleSpace.newline,
         isList: true,
+        isBlock: true,
         render: function (item: ITreeNode) {
           if (!item.isList) {
             item.value = '';
@@ -135,66 +137,65 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
           return `<li>${item.value}</li>`;
         }
       },
-      image: {
-        start: '[image](',
+      link: {
+        status: ['[', '](', ')'],
+        start: '[',
         end: ')',
         render: (item: ITreeNode) => {
-          if (item.value && item.value.indexOf('http') >= 0) {
-            return `<img src="${item.value}"/>`
+          if (item.value.indexOf('](') > -1) {
+            let arr = item.value.split('](');
+            return `<img src="${arr[1]}" title="${arr[0]}"/>`;
+          } else if (item.children) {
+            return item.value;
           }
-          if (item.value && item.value.indexOf('id:') === 0) {
-            let img = item.value.substring(3)
-            // if (this.data.img) {
-            //   return `<img src="${this.data.img[img]}">`
-            // }
-          }
-          return '';
-          // return value
-        },
+          return `[${item.value})`;
+        }
       },
-      hlink: {
-        start: '[hlink](',
+      image: {
+        status: ['![', '](', ')'],
+        start: '![',
         end: ')',
-        render: function (item: ITreeNode) {
-          let value = item.value.replace(/，/g,',')
-          let arr = value.split(',')
-          if (arr[1].indexOf('www') === 0) {
-            arr[1] = `http://${arr[1]}`
+        render: (item: ITreeNode) => {
+          if (item.value.indexOf('](') > -1) {
+            let arr = item.value.split('](');
+            return `<a target="_blank" href="${arr[1]}">${arr[0]}</a>`;
+          } else if (item.children) {
+            return item.value;
           }
-          return `<a target="_blank" href="${arr[1]}">${arr[0]}</a>`
-        },
+          return `![${item.value})`;
+        }
       },
       table: {
-        start: '[table](',
-        end: ')',
-        isAtom: true,
+        start: '|',
+        end: '|' + ruleSpace.newline,
+        // isAtom: true,
         isBlock: true,
+        isList: true,
         render: (item: ITreeNode) => {
           let value = item.value;
           if (!value) return ''
-          return '';
-          // let arr = dealString.strToArr(value, ruleSpace.newline, '|')
-          // let tableContent = '<table>'
-          // tableContent += '<tr>'
-          // for (let i=0; i<arr[0].length; i++) {
-          //   tableContent += `<th>${arr[0][i]}</th>`
-          // }
-          // tableContent += '</tr>'
-          // for (let i=1; i<arr.length; i++) {
-          //   tableContent += '<tr>'
-          //   for (let j=0; j<arr[i].length; j++) {
-          //     tableContent += `<td>${arr[i][j]}</td>`
-          //   }
-          //   tableContent += '</tr>'
-          // }
-          // tableContent += `</table>`
-          // return tableContent
+          return item.value;
         },
       },
     }
   },
-  blankline: () => {
-    return `<div></div>`
+  /**
+   * 所有节点渲染完毕后，对换行进行处理
+   * @param item 
+   * @param ruleSpace 
+   * @param isRootLine 是否根节点上的行
+   * @returns 
+   */
+  blankline: (item: ITreeNode, ruleSpace: IRuleSpace, isRootLine?: boolean) => {
+    if (isRootLine && item.data === ruleSpace.newline) {
+      return '<div class="row-one"></div>';
+    }
+    if (item.nodeType !== 'block' ||
+      item.data === ruleSpace.newline ||
+      !item.children || item.isList) {
+        return '';
+    }
+    return `<div class="row">${item.value}</div>`;
   }
 }
 

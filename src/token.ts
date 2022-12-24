@@ -112,27 +112,27 @@ export class Token {
     let stream2tree = new Stream2tree(this.token);
     let startEndStack = new Stack();
     stream2tree.wash((i, t) => { // isGenerateStackNode
-        let item: ITreeNode = i as ITreeNode; // 实际也可能是ITokenNode
-        let top: undefined|ITreeNode = t as (undefined|ITreeNode); // 实际也可能是ITokenNode
-        if (!top) { return false; }
-        return (top.isList && top.children && item.key !== top?.key) || false;
-      }, (i, t) => { // isStopGenerateStackNode
-        let item: ITreeNode = i as ITreeNode;
-        let top: ITreeNode = t as ITreeNode;
-        return item.key !== top.key;
-      }, (i) => { // gennerateStackNode
-        let item = i as ITreeNode;
-        let node: ITreeNode = {
-          key: item.key,
-          tokenType: item.tokenType,
-          nodeType: item.nodeType,
-          id: toolbox.generateId(),
-          value: '',
-          isList: false,
-          children: [item]
-        }
-        return node as {children: unknown[]};
-      }, (i, t) => {
+      let item: ITreeNode = i as ITreeNode; // 实际也可能是ITokenNode
+      let top: undefined|ITreeNode = t as (undefined|ITreeNode); // 实际也可能是ITokenNode
+      if (!top) { return false; }
+      return (top.isList && top.children && item.key !== top?.key) || false;
+    }, (i, t) => { // isStopGenerateStackNode
+      let item: ITreeNode = i as ITreeNode;
+      let top: ITreeNode = t as ITreeNode;
+      return item.key !== top.key;
+    }, (i) => { // gennerateStackNode
+      let item = i as ITreeNode;
+      let node: ITreeNode = {
+        key: item.key,
+        tokenType: item.tokenType,
+        nodeType: 'block',
+        id: toolbox.generateId(),
+        value: '',
+        isList: false,
+        children: [item],
+      }
+      return node as {children: unknown[]};
+    }, (i, t) => { // stopInFn
       let item = i as ITokenItem; // item 一定是token
       let top = t as undefined|ITokenItem|ITreeNode;
       if (item.tokenType === 'start' || item.tokenType === 'content') { return true; }
@@ -141,8 +141,11 @@ export class Token {
         if (!top ||
           ((top as ITreeNode).nodeType === 'block' || (top as ITokenItem).isBlock) &&
           item.data === this.rules.space.newline) {
+          this.updateNewLineItem(item);
           return true;
         }
+
+        this.updateNewLineItem(item);
         return false;
       }
       // startEnd的情况
@@ -153,12 +156,15 @@ export class Token {
       }
       startEndStack.push(item);
       return true;
-    }, (i, top) => { // 应该把这里的top都升为ITreeNode
+    }, (i, top, ttop) => { // 应该把这里的top都升为ITreeNode
       let t = this.token2treeNode(top) as ITreeNode;
+      let tt = ttop as ITreeNode;
       let it: ITreeNode = (this.token2treeNode(i) as ITreeNode);
-      // if (t.isStartList) { return false; }
       // block的级别比较高，所以当top是block的时候停止pop，结束本次升树操作
       if (t.nodeType === 'block' && it.nodeType === 'block') {
+        return false;
+      }
+      if (tt && tt.nodeType === 'block') {
         return false;
       }
       // 找到了start（startEnd也可能是start），结束本次升树操作
@@ -172,14 +178,17 @@ export class Token {
       let node: ITreeNode = {
         key: item.key,
         tokenType: item.tokenType,
-        nodeType: item.isBlock ? 'block' : 'content',
+        // @ts-ignore
+        nodeType: item.isBlock || item.nodeType === 'block' ? 'block' : 'content',
         id: toolbox.generateId(),
         value: '',
         isList: item.isList || false,
         children: [{
           key: item.key,
           tokenType: item.tokenType,
-          nodeType: item.tokenType === 'content' ? (item.isBlock ?'block' : 'content') : 'keyword',
+          // @ts-ignore
+          nodeType: item.isBlock || item.nodeType === 'block' ? 'block' :
+            (item.tokenType === 'content' ? 'content' : 'block'),
           data: item.data,
           id: toolbox.generateId(),
           value: '',
@@ -206,7 +215,7 @@ export class Token {
   private token2treeNode (item: unknown) {
     let i: any = item;
     // @ts-ignore
-    i.nodeType = i.isBlock ? 'block' :
+    i.nodeType = (i.isBlock||i.nodeType === 'block') ? 'block' :
       (i.tokenType === 'start' || i.tokenType === 'end' || i.tokenType === 'startEnd') ? 'keyword' : 'content';
     // @ts-ignore
     i.value = '';
@@ -214,5 +223,17 @@ export class Token {
     // @ts-ignore
     delete i.isBlock;
     return i;
+  }
+
+  private updateNewLineItem(item: ITokenItem) {
+    if (item.data !== this.rules.space.newline) {
+      return;
+    }
+    // @ts-ignore
+    item.nodeType = 'block';
+    // @ts-ignore
+    item.isRootLine = true;
+    // @ts-ignore
+    delete item.isBlock;
   }
 }

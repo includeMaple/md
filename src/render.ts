@@ -63,10 +63,9 @@ export class Render {
       item.value = this.getChildrenValue(item)
       let renderFn = this.rules.options[item.key]?.render || DEFAULT_RENDER_FN;
       item.value = renderFn(item);
-    } else if (!item.children && item.data === this.rules.space.newline) { // 叶子节点, 并且是空行
-      item.value = this.rules.blanklineFn()
     } else if (item.nodeType === 'content') {
       item.value = item.data || '';
     }
+    item.value = this.rules.blanklineFn(item, this.rules.space, item.isRootLine) ? this.rules.blanklineFn(item, this.rules.space, item.isRootLine) : item.value;
   }
 }

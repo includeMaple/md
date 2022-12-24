@@ -41,8 +41,12 @@ let doc = `
 1. ccc
 1. ddd
 
-* ee
-* 8878
+[连接](ee/dedd/)
+![图片](/sd/sd/fsa)
+[ccdd]
+(--dddww)
+
+[aaa]ddddd(000)
 
 `
 // ` + '```**cc** let cc = bb;```'

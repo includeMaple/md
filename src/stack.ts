@@ -87,7 +87,7 @@ export class Stream2tree {
     isStopGenerateStackNode: (itemData: unknown, top: unknown) => boolean, // 是否停止对stack进行升树操作
     gennerateStackNode: (itemData: unknown) => {children: unknown[]}, // 生成node
     stopInFn: (itemData: unknown, top: unknown)=> boolean,
-    stopOutFn: (itemData: unknown, top: unknown)=> boolean,
+    stopOutFn: (itemData: unknown, top: unknown, ttop: unknown)=> boolean,
     generateNode: (itemData: unknown) => {children: unknown[]},
     updateNode: (itemData: unknown) => void) {
     // 循环遍历stream token，要判断的是，什么时候入栈什么时候升级别
@@ -112,19 +112,20 @@ export class Stream2tree {
    * @param stopOutFn true继续出栈，false停止出栈
    */
   getTreeNode (item: unknown,
-    stopOutFn: (itemData: unknown, top: unknown)=> boolean,
+    stopOutFn: (itemData: unknown, top: unknown, ttop: unknown)=> boolean,
     generateNode: (itemData: unknown) => {children: unknown[]},
     updateNode: (itemData: unknown) => void) {
     let node: {children: unknown[]} = generateNode(item);
     while (true) {
       let top = this.stackData.pop();
+      let ttop = this.stackData.getTop();
 
       if (!top && node.children.length > 0) {
         this.stackData.push(node);
         return;
       }
       node.children.unshift(top);
-      if (!stopOutFn(item, top)) {
+      if (!stopOutFn(item, top, ttop)) {
         updateNode(node); // 插入前更新下
         this.stackData.push(node);
         return;
