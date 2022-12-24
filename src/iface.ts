@@ -11,7 +11,7 @@ export interface IRuleOptionsInfo {
   titleList?: string[],
   // 需要根据配置动态加载换行和空格等
   options: (ruleSpace: IRuleSpace) => IRuleOptions,
-  blankline?: (item: ITreeNode, ruleSpace: IRuleSpace, isRootLine?: boolean) => string
+  blankline?: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => string
 }
 // 配置项
 export interface IRuleOptions {
@@ -22,7 +22,7 @@ export interface IRuleOptions {
     isAtom?: boolean, // 原子性，表示不可切割，内部不论匹配到什么情况，不找到结束标志不创造token
     isBlock?: boolean, // 元素内部是否可换行，true表示可换行
     isList?: boolean, // 是否和前后作为一个组
-    render?: (item: ITreeNode) => string
+    render?: (item: ITokenItem) => string
   }
 }
 
@@ -54,23 +54,12 @@ export interface ITokenItem {
   id: string,
   isList: boolean,
   isStartList?: boolean,
-}
-
-export type TTreeType = 'content'|'block'|'keyword';
-export interface ITreeNode {
-  tokenType: TTokenType, // token type，根据type而来，关键字之外添加content
-  nodeType: TTreeType, // 节点类型，将所有类型归为 内容content 换行block 关键字
-  children?: ITreeNode[],
-  key: string,
-  data?: string,
-  id: string,
+  isRootLine?: boolean,
   value: string,
-  isStartList?: boolean,
-  isList?: boolean,
-  isRootLine?: boolean
+  children?: ITokenItem[],
 }
 
 export interface IRenderOption {
   title: string[],
-  options: {[key: string]: (item: ITreeNode) => string}
+  options: {[key: string]: (item: ITokenItem) => string}
 }

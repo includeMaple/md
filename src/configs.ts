@@ -1,4 +1,4 @@
-import { IRuleSpace, ITreeNode, IRuleOptionsInfo } from './iface';
+import { IRuleSpace, ITokenItem, IRuleOptionsInfo } from './iface';
 
 export const RULE_SPACE: IRuleSpace = {
   newline: '\n',
@@ -16,77 +16,77 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
       title1: {
         start: '#' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `<h1><a name="title-${item.id}"></a>${item.value}</h1>`
         },
       },
       title2: {
         start: '##' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<h2><a name="title-${item.id}"></a>${item.value}</h2>`
         },
       },
       title3: {
         start: '###' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<h3><a name="title-${item.id}"></a>${item.value}</h3>`
         },
       },
       title4: {
         start: '####' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<h4><a name="title-${item.id}"></a>${item.value}</h4>`
         },
       },
       tilte5: {
         start: '#####' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<h5><a name="title-${item.id}"></a>${item.value}</h5>`
         },
       },
       title6: {
         start: '######' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<h6><a name="title-${item.id}"></a>${item.value}</h6>`
         },
       },
       bold: {
         start: '**',
         end: '**',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<strong>${item.value}</strong>`
         },
       },
       italic: {
         start: '~~',
         end: '~~',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<i>${item.value}</i>`
         },
       },
       spaceTwo: { // todo
         start: '>',
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${ruleSpace.space}${ruleSpace.space}${item.value}`
         },
       },
       lineStar: {
         start: '***',
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<div class="line-star">${item.value}</div>`
         },
       },
       lineHorizontal: {
         start: '---',
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<div class="line-horizotal">${item.value}</div>`
         },
       },
@@ -94,7 +94,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '```',
         end: '```',
         isAtom: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           // https://github.com/highlightjs/highlight.js
           return `<pre><code>${item.value}</code></pre>`
         },
@@ -104,7 +104,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         end: ruleSpace.newline,
         isList: true,
         isBlock: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           if (!item.isList) {
             item.value = '';
             item.children?.forEach((i) => {
@@ -123,7 +123,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         end: ruleSpace.newline,
         isList: true,
         isBlock: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           if (!item.isList) {
             item.value = '';
             item.children?.forEach((i) => {
@@ -141,7 +141,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         status: ['[', '](', ')'],
         start: '[',
         end: ')',
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           if (item.value.indexOf('](') > -1) {
             let arr = item.value.split('](');
             return `<img src="${arr[1]}" title="${arr[0]}"/>`;
@@ -155,7 +155,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         status: ['![', '](', ')'],
         start: '![',
         end: ')',
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           if (item.value.indexOf('](') > -1) {
             let arr = item.value.split('](');
             return `<a target="_blank" href="${arr[1]}">${arr[0]}</a>`;
@@ -171,7 +171,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         // isAtom: true,
         isBlock: true,
         isList: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           let value = item.value;
           if (!value) return ''
           return item.value;
@@ -186,11 +186,11 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
    * @param isRootLine 是否根节点上的行
    * @returns 
    */
-  blankline: (item: ITreeNode, ruleSpace: IRuleSpace, isRootLine?: boolean) => {
+  blankline: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => {
     if (isRootLine && item.data === ruleSpace.newline) {
       return '<div class="row-one"></div>';
     }
-    if (item.nodeType !== 'block' ||
+    if (!item.isBlock ||
       item.data === ruleSpace.newline ||
       !item.children || item.isList) {
         return '';
@@ -209,7 +209,7 @@ export const MD_EX_BASE: IRuleOptionsInfo = {
         start: '@@warning ',
         end: '@@',
         isAtom: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<span class="star-warning">${item.value}</span>`
         },
       },
@@ -217,7 +217,7 @@ export const MD_EX_BASE: IRuleOptionsInfo = {
         start: '@@danger ',
         end: '@@',
         isAtom: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<span class="star-danger">${item.value}</span>`
         },
       },
@@ -225,7 +225,7 @@ export const MD_EX_BASE: IRuleOptionsInfo = {
         start: '@@info ',
         end: '@@',
         isAtom: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<span class="star-info">${item.value}</span>`
         },
       },
@@ -233,21 +233,21 @@ export const MD_EX_BASE: IRuleOptionsInfo = {
         start: '@@success ',
         end: '@@',
         isAtom: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<span class="star-success">${item.value}</span>`
         },
       },
       step: {
         start: '%% ',
         end: '%%',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `<span class="step"><a name="step-${item.id}"></a>${item.value}</span>`
         },
       },
       hlink: {
         start: '[hlink](',
         end: ')',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           let value = item.value.replace(/，/g,',')
           let arr = value.split(',')
           if (arr[1].indexOf('www') === 0) {
@@ -288,49 +288,49 @@ export const MD_NORMAL_TEXT: IRuleOptionsInfo = {
       title1: {
         start: '#' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${item.value}${ruleSpace.newline}`
         },
       },
       title2: {
         start: '##' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${item.value}${ruleSpace.newline}`
         },
       },
       title3: {
         start: '###' +ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${item.value}${ruleSpace.newline}`
         },
       },
       title4: {
         start: '####' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${item.value}${ruleSpace.newline}`
         },
       },
       tilte5: {
         start: '#####' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${item.value}${ruleSpace.newline}`
         },
       },
       title6: {
         start: '######' + ruleSpace.space,
         end: ruleSpace.newline,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return `${item.value}${ruleSpace.newline}`
         },
       },
       bold: {
         start: '**',
         end: '**',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return item.value
         },
       },
@@ -338,35 +338,35 @@ export const MD_NORMAL_TEXT: IRuleOptionsInfo = {
         start: '@@code ',
         end: '@@',
         isAtom: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return item.value
         },
       },
       italic: {
         start: '~~',
         end: '~~',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return item.value
         },
       },
       spaceTwo: {
         start: '>',
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `  ${item.value}`
         },
       },
       lineStar: {
         start: '***',
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `${item.value}${item.value}${item.value}${item.value}${item.value}${item.value}`
         },
       },
       lineHorizontal: {
         start: '---',
         end: ruleSpace.newline,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return `${item.value}${item.value}${item.value}${item.value}${item.value}${item.value}`
         },
       },
@@ -375,21 +375,21 @@ export const MD_NORMAL_TEXT: IRuleOptionsInfo = {
         end: '```',
         isAtom: true,
         isBlock: true,
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return  item.value;
         },
       },
       image: {
         start: '[image](',
         end: ')',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return item.value;
         },
       },
       hlink: {
         start: '[hlink](',
         end: ')',
-        render: function (item: ITreeNode) {
+        render: function (item: ITokenItem) {
           return item.value;
         }
       },
@@ -398,7 +398,7 @@ export const MD_NORMAL_TEXT: IRuleOptionsInfo = {
         end: ')',
         isAtom: true,
         isBlock: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           let value = item.value;
           if (!value) return ''
           return '';
@@ -433,7 +433,7 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
         start: '@@warning ',
         end: '@@',
         isAtom: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
@@ -441,7 +441,7 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
         start: '@@danger ',
         end: '@@',
         isAtom: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
@@ -449,7 +449,7 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
         start: '@@info ',
         end: '@@',
         isAtom: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
@@ -457,21 +457,21 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
         start: '@@success ',
         end: '@@',
         isAtom: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
       step: {
         start: '%% ',
         end: '%%',
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
       hlink: {
         start: '[hlink](',
         end: ')',
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
@@ -479,7 +479,7 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
         start: '[book](',
         end: ')',
         isBlock: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return item.value;
         },
       },
@@ -487,7 +487,7 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
         start: '// ',
         end: ruleSpace.newline,
         isAtom: true,
-        render: (item: ITreeNode) => {
+        render: (item: ITokenItem) => {
           return '';
         },
       },
@@ -498,13 +498,13 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
 // 规则之外的渲染
 // export const DEFAULT_RENDER: IRuleOptions = {
 //   // block: {
-//   //   render: function (item: ITreeNode) {
+//   //   render: function (item: ITokenItem) {
 //   //     return `<p>${item.value}</p>`
 //   //   },
 //   // },
 //   // @ts-ignore
 //   // content: {
-//   //   render: function (item: ITreeNode) {
+//   //   render: function (item: ITokenItem) {
 //   //     if (item.value && item.value[0] ==='\\') {
 //   //       return item.value.slice(1)
 //   //     }
@@ -513,6 +513,6 @@ export const MD_EX_TEXT: IRuleOptionsInfo = {
 //   // }
 // }
 
-export const DEFAULT_RENDER_FN = (item: ITreeNode) => {
+export const DEFAULT_RENDER_FN = (item: ITokenItem) => {
   return item.value
 }

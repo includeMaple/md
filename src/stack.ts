@@ -1,4 +1,4 @@
-import { ITreeNode } from "./iface";
+import { ITokenItem } from "./iface";
 
 // stack
 export class Stack {
@@ -162,11 +162,11 @@ export class TreeWalk {
    * 下面代码未仔细测试todo
    * @param data 
    */
-  preorder (data: ITreeNode[]) {
+  preorder (data: ITokenItem[]) {
     this.stack.initData(data);
-    let res: ITreeNode[] = [];
+    let res: ITokenItem[] = [];
     while (!this.stack.isEmpty()) {
-      let top: ITreeNode = this.stack.pop() as ITreeNode;
+      let top: ITokenItem = this.stack.pop() as ITokenItem;
       res.push(top);
 
       if (top.children) {
@@ -190,11 +190,11 @@ export class TreeWalk {
    * postorder tree walk 树的深度优先遍历的后序遍历
    * @param data 
    */
-  postorder (data: ITreeNode[], fn?: (node: ITreeNode) => void) {
+  postorder (data: ITokenItem[], fn?: (node: ITokenItem) => void) {
     this.stack.initData(data);
-    let res: ITreeNode[] = [];
+    let res: ITokenItem[] = [];
     while (!this.stack.isEmpty()) {
-      let top: ITreeNode = this.stack.pop() as ITreeNode;
+      let top: ITokenItem = this.stack.pop() as ITokenItem;
 
       res.unshift(top);
 

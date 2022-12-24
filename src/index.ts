@@ -1,7 +1,7 @@
 import { Rules } from './rules';
 import { Token } from './token';
 import { Render } from './render';
-import { ITreeNode } from './iface';
+import { ITokenItem } from './iface';
 export class MdC {
   public rule: Rules = new Rules();
   private token: Token = new Token();
@@ -16,7 +16,8 @@ export class MdC {
 
     this.render.setRules(this.rule);
     // 将抽象语法树渲染回指定文本
-    return this.render.render(tree as ITreeNode[]);
+    // @ts-ignore
+    return this.render.render(tree as ITokenItem[]);
   }
   /**
    * 将md转换为html
@@ -43,13 +44,17 @@ let doc = `
 
 [连接](ee/dedd/)
 ![图片](/sd/sd/fsa)
-[ccdd]
-(--dddww)
 
+[ddd]
+(--dddww)
 [aaa]ddddd(000)
 
 `
 // ` + '```**cc** let cc = bb;```'
+//
+//
+
+//
 let markdown = new MdC();
 // 设置规则
 markdown.rule.setRules({
