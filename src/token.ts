@@ -58,7 +58,7 @@ export class Token {
         let rule = ruleMap[s];
         for (let j=0; j< rule.length; j++) {
           let docMayToken = this.document.substring(i, i+rule[j].len);
-          if (docMayToken !== rule[j].data) {
+          if (docMayToken !== rule[j].data && rule[j].status.length === 0) {
             continue;
           }
           // 等于的情况中，要挑出atom的情况，奇数进入原子期，期间直到找到下一个原子才能停止
@@ -178,12 +178,11 @@ export class Token {
       let node: ITokenItem = {
         key: item.key,
         tokenType: item.tokenType,
-        // @ts-ignore
-        nodeType: 'content',
         isBlock: item.isBlock,
         id: toolbox.generateId(),
         value: '',
         isList: item.isList || false,
+        data: '',
         children: [{
           key: item.key,
           tokenType: item.tokenType,
@@ -198,9 +197,44 @@ export class Token {
     }, (i) => { // 升树前对node进行更新
       let item: ITokenItem = i as ITokenItem;
       if (item.children && item.children.length > 0) {
-        item.key = item.children[0].key; // 开始的key和isList才是最准确的
+        // item.key = item.children[0].key; // 开始的key和isList才是最准确的
         item.isList = item.children[0].isList;
       }
+    }, (s) => { // 上面都可以按照这种方式修改，在外面判断，返回要修改节点即可，不需要拆出那么多函数，可优化
+      let st = s as Stack;
+
+      // 1. 确认是否要升树
+      for (let key of Object.keys(this.rules.options)) {
+        let ruleStatus = this.rules.options[key].status;
+        if (ruleStatus && ruleStatus.length > 0) {
+          let i = st.top;
+          let isCheckOk = true;
+          for (let j = ruleStatus.length - 1; j >= 0; j--) {
+            if (!st.data[i] || !(st.data as ITokenItem[])[i].children || (st.data as ITokenItem[])[i].key !== ruleStatus[j]) {
+              isCheckOk = false;
+            }
+            i--;
+          }
+          if (!isCheckOk) { continue; }
+          // 2. 返回节点做升树操作
+          let res: ITokenItem = {
+            key: key,
+            tokenType: 'content',
+            isBlock: this.rules.options[key].isBlock || false,
+            id: toolbox.generateId(),
+            value: '',
+            isList: this.rules.options[key].isList || false,
+            data: '',
+            children: []
+          }
+          for (let key of ruleStatus) {
+            let top = st.pop();
+            top && res.children?.unshift(top as ITokenItem);
+          }
+          return res;
+        }
+      }
+      return false;
     })
     this.tree = stream2tree.stackData.getData() as ITokenItem[];
     return this.tree;

@@ -1,4 +1,5 @@
 import { IRuleSpace, ITokenItem, IRuleOptionsInfo } from './iface';
+import { Token } from './token';
 
 export const RULE_SPACE: IRuleSpace = {
   newline: '\n',
@@ -138,31 +139,49 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         }
       },
       link: {
-        status: ['[', '](', ')'],
-        start: '[',
-        end: ')',
+        status: ['squareBrackets', 'brackets'],
+        start: '',
+        end: '',
         render: (item: ITokenItem) => {
-          if (item.value.indexOf('](') > -1) {
-            let arr = item.value.split('](');
-            return `<img src="${arr[1]}" title="${arr[0]}"/>`;
-          } else if (item.children) {
-            return item.value;
+          if (item.children && item.children.length > 1 && item.tokenType !== 'end') {
+            return `<a target="_blank" href="${item.children[0].data}">${item.children[1].data}</a>`
           }
-          return `[${item.value})`;
+          return item.value;
         }
       },
       image: {
-        status: ['![', '](', ')'],
-        start: '![',
+        start: '',
+        status: ['exclSquareBrackets', 'brackets'],
+        end: '',
+        render: (item: ITokenItem) => {
+          if (item.children && item.children.length > 1 && !item.isBlock) {
+            return `<img src="${item.children[0].data}" title="${item.children[1].data}"/>`
+          }
+          return item.value;
+        }
+      },
+      brackets: {
+        start: '(',
         end: ')',
         render: (item: ITokenItem) => {
-          if (item.value.indexOf('](') > -1) {
-            let arr = item.value.split('](');
-            return `<a target="_blank" href="${arr[1]}">${arr[0]}</a>`;
-          } else if (item.children) {
-            return item.value;
-          }
-          return `![${item.value})`;
+          item.data = item.value;
+          return item.isBlock ? item.value : `(${item.value})`;
+        }
+      },
+      squareBrackets: {
+        start: '[',
+        end: ']',
+        render: (item: ITokenItem) => {
+          item.data = item.value;
+          return item.isBlock ? item.value : `[${item.value}]`;
+        }
+      },
+      exclSquareBrackets: {
+        start: '![',
+        end: ']',
+        render: (item: ITokenItem) => {
+          item.data = item.value;
+          return `![${item.value}]`
         }
       },
       table: {

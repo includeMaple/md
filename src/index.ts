@@ -39,17 +39,25 @@ export class MdC {
   }
 }
 let doc = `
-1. ccc
-1. ddd
-
+# ccc
+## fff
 [连接](ee/dedd/)
 ![图片](/sd/sd/fsa)
 
-[ddd]
-(--dddww)
 [aaa]ddddd(000)
 
+(--dddww)[ddd]
+
 `
+// let doc = `
+// [连接](ee/dedd/)
+// ![图片](/sd/sd/fsa)
+
+// [ddd]
+// (--dddww)
+// [aaa]ddddd(000)
+
+// `
 // ` + '```**cc** let cc = bb;```'
 //
 //

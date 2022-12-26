@@ -107,6 +107,7 @@ export class Rules {
       key: k,
       isAtom: this.options[k].isAtom || false,
       isList: this.options[k].isList || false,
+      status: this.options[k].status || []
     }
     if (firstWord in this.ruleMap) {
       this.ruleMap[firstWord].push(ruleInfo);

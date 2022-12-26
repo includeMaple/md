@@ -89,10 +89,14 @@ export class Stream2tree {
     stopInFn: (itemData: unknown, top: unknown)=> boolean,
     stopOutFn: (itemData: unknown, top: unknown, ttop: unknown)=> boolean,
     generateNode: (itemData: unknown) => {children: unknown[]},
-    updateNode: (itemData: unknown) => void) {
+    updateNode: (itemData: unknown) => void,
+    isStatus: (stack: Stack) => unknown|null) {
     // 循环遍历stream token，要判断的是，什么时候入栈什么时候升级别
     this.data.forEach((item: unknown) => {
       let top = this.stackData.getTop();
+      // 往前遍历stack的内容，确定是否需要添加
+      let addStatus = isStatus(this.stackData);
+      addStatus && this.stackData.push(addStatus);
       // 是否需要对stack内的内容进行升树操作（不包含item）
       if (isGenerateStackNode(item, top)) {
         this.getStackNode(isStopGenerateStackNode, gennerateStackNode);
@@ -125,6 +129,8 @@ export class Stream2tree {
         return;
       }
       node.children.unshift(top);
+      // @ts-ignore
+      node.key = top.key
       if (!stopOutFn(item, top, ttop)) {
         updateNode(node); // 插入前更新下
         this.stackData.push(node);

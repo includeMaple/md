@@ -36,7 +36,8 @@ export interface IRuleMapItem {
   isBlock: boolean,
   key: string,
   isAtom: boolean,
-  isList: boolean
+  isList: boolean,
+  status: string[]
 }
 export interface IRuleMap {
   [key: string]: IRuleMapItem[]
