@@ -5,3 +5,4 @@ package-lock.json
 compile
 /test/md/*
 /test/html/*
+log.log

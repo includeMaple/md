@@ -32,7 +32,3 @@ class Md2html {
 
 let md2html = new Md2html();
 md2html.exec();
-
-
-
-

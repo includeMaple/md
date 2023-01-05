@@ -12,7 +12,7 @@
         "<node_internals>/**"
       ],
       // "program": "${workspaceFolder}/src/index.ts",
-      "program": "${workspaceFolder}/src/serve/index.ts",
+      "program": "${workspaceFolder}/src/serve/http.ts",
       "outFiles": [
         "${workspaceFolder}/**/*.js",
         "!**/node_modules/**"
