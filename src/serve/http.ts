@@ -37,7 +37,7 @@ class Server {
         res.end(fn('ccc'));
       }
       // method post
-      req.on('data',function(data){
+      req.on('data', function(data) {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'text/plain');
         res.end(fn(data.toString()));

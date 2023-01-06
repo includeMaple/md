@@ -1,5 +1,6 @@
 import { LOGGER_CONFIGS } from './configs';
 import { writeFile, access, appendFile } from 'fs/promises';
+import { toolbox } from '../utils';
 
 interface ILoggerItem {
   content: string,
@@ -45,14 +46,9 @@ export class Logger {
   log (content: string, type:ILoggerType = 'log') {
     this.add({
       content: content,
-      time: this.getDate(),
+      time: toolbox.dataFormat(),
       type: type
     })
-  }
-
-  getDate () {
-    let date = new Date();
-    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
   }
 }
 

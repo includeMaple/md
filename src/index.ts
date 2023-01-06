@@ -1,7 +1,7 @@
-import { Rules } from './rules';
-import { Token } from './token';
-import { Render } from './render';
-import { ITokenItem } from './iface';
+import { Rules } from './core/rules';
+import { Token } from './core/token';
+import { Render } from './core/render';
+import { ITokenItem } from './core/iface';
 export class MdC {
   public rule: Rules = new Rules();
   private token: Token = new Token();
