@@ -4,6 +4,8 @@ export interface IRuleSpace {
   space: string, // 分隔符
   escape: string, // 转意字符
 }
+export type TRuleType = 'start'|'end'|'startEnd';
+
 // 文件用配置，匹配规则，用于configs中进行配置
 export interface IRuleOptionsInfo {
   type?: string,
@@ -13,21 +15,21 @@ export interface IRuleOptionsInfo {
   options: (ruleSpace: IRuleSpace) => IRuleOptions,
   blankline?: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => string
 }
+export interface IRuleOptionsItem {
+  type: TRuleType,
+  start: string,
+  end: string,
+  status?: string[],
+  isAtom?: boolean, // 原子性，表示不可切割，内部不论匹配到什么情况，不找到结束标志不创造token
+  isBlock?: boolean, // 元素内部是否可换行，true表示可换行
+  isList?: boolean, // 是否和前后作为一个组
+  render?: (item: ITokenItem) => string
+}
 // 配置项
 export interface IRuleOptions {
-  [key: string]: {
-    start: string,
-    end: string,
-    status?: string[],
-    isAtom?: boolean, // 原子性，表示不可切割，内部不论匹配到什么情况，不找到结束标志不创造token
-    isBlock?: boolean, // 元素内部是否可换行，true表示可换行
-    isList?: boolean, // 是否和前后作为一个组
-    render?: (item: ITokenItem) => string
-  }
+  [key: string]: IRuleOptionsItem
 }
 
-// 下面提供程序内使用
-export type TRuleType = 'start'|'end'|'startEnd';
 // 匹配规则，将配置文件清洗成使用模式
 export interface IRuleMapItem {
   type: TRuleType, // 规则类型
@@ -37,27 +39,32 @@ export interface IRuleMapItem {
   key: string,
   isAtom: boolean,
   isList: boolean,
-  status: string[]
+  status?: string[],
 }
 export interface IRuleMap {
   [key: string]: IRuleMapItem[]
+}
+export interface IRuleMapStatus {
+  [key: string]: IRuleMapItem
 }
 export interface IRuleEndMap {
   [key: string]: string[]
 }
 
-export type TTokenType = 'start'|'end'|'content'|'startEnd';
+export type TType = 'start'|'end'|'startEnd'|'checked';
 export interface ITokenItem {
-  tokenType: TTokenType, // token type，根据type而来，关键字之外添加content
-  data: string,
-  key: string,
-  isBlock: boolean,
+  // 基本数据
   id: string,
+  type: TType, // content or others
+  key: string,
+  data: string,
+  isBlock: boolean,
   isList: boolean,
-  isStartList?: boolean,
-  isRootLine?: boolean,
-  value: string,
+  isComple: boolean,
   children?: ITokenItem[],
+
+  // reander时使用
+  value?: string,
 }
 
 export interface IRenderOption {

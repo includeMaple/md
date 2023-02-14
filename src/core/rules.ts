@@ -1,6 +1,6 @@
 
 import { RULE_SPACE, MD_NORMAL_BASE, MD_EX_BASE, MD_NORMAL_TEXT, MD_EX_TEXT } from './configs';
-import { IRuleSpace, IRuleOptions, IRuleOptionsInfo, IRuleMap, IRuleEndMap, TRuleType, IRuleMapItem, ITokenItem, } from './iface';
+import { IRuleSpace, IRuleOptions, IRuleOptionsInfo,IRuleOptionsItem,IRuleMapStatus, IRuleMap, IRuleEndMap, TRuleType, IRuleMapItem, ITokenItem, } from './iface';
 import {  TDocType, TMdType, ruleOptions } from './ttype';
 
 /**
@@ -25,8 +25,9 @@ export class Rules {
   // 将options清洗成下面两种，用于token生成tree
   public ruleMap: IRuleMap = {};
   public ruleEndMap: IRuleEndMap = {};
+  public ruleStatus: IRuleMapStatus = {}
   public blanklineFn: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => string = () => {
-    return this.space.newline
+    return this.space.newline;
   }
   constructor () {}
 
@@ -78,7 +79,9 @@ export class Rules {
    */
   private washOptions () {
     for(let k in this.options) {
-      if (this.options[k]['start'] === this.options[k]['end']) {
+      if (this.options[k].status) {
+        this.generateRuleStatus(k, this.options[k]);
+      } else if (this.options[k]['start'] === this.options[k]['end']) {
         this.washEndInfo(k, 'startEnd', 'start')
       } else {
         this.washEndInfo(k, 'start', 'start')
@@ -91,6 +94,19 @@ export class Rules {
         return two.len - one.len
       })
     }
+  }
+
+  private generateRuleStatus (key: string, item: IRuleOptionsItem) {
+    this.ruleStatus[key] =  {
+      type: 'startEnd',
+      data: '',
+      len: 0,
+      isBlock: item.isBlock || false,
+      key: key,
+      isAtom: this.options[key].isAtom || false,
+      isList: false,
+      status: item.status
+    };
   }
 
   private washEndInfo (k: string, type: TRuleType, useKey: 'start' | 'end') {
@@ -107,7 +123,6 @@ export class Rules {
       key: k,
       isAtom: this.options[k].isAtom || false,
       isList: this.options[k].isList || false,
-      status: this.options[k].status || []
     }
     if (firstWord in this.ruleMap) {
       this.ruleMap[firstWord].push(ruleInfo);
