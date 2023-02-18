@@ -13,14 +13,16 @@ export interface IRuleOptionsInfo {
   titleList?: string[],
   // 需要根据配置动态加载换行和空格等
   options: (ruleSpace: IRuleSpace) => IRuleOptions,
-  blankline?: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => string
+  newline?: (item: ITokenItem) => string
 }
+
 export interface IRuleOptionsItem {
-  type: TRuleType,
+  type?: TRuleType,
   start: string,
   end: string,
   status?: string[],
   isAtom?: boolean, // 原子性，表示不可切割，内部不论匹配到什么情况，不找到结束标志不创造token
+  includeSelf?: boolean,
   isBlock?: boolean, // 元素内部是否可换行，true表示可换行
   isList?: boolean, // 是否和前后作为一个组
   render?: (item: ITokenItem) => string
@@ -40,6 +42,7 @@ export interface IRuleMapItem {
   isAtom: boolean,
   isList: boolean,
   status?: string[],
+  includeSelf: boolean,
 }
 export interface IRuleMap {
   [key: string]: IRuleMapItem[]
@@ -55,16 +58,15 @@ export type TType = 'start'|'end'|'startEnd'|'checked';
 export interface ITokenItem {
   // 基本数据
   id: string,
-  type: TType, // content or others
-  key: string,
+  type: TType,
+  key: 'content'|'newline'|'root'|string,
   data: string,
   isBlock: boolean,
   isList: boolean,
   isComple: boolean,
   children?: ITokenItem[],
-
   // reander时使用
-  value?: string,
+  value: string,
 }
 
 export interface IRenderOption {

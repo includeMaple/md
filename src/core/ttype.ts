@@ -11,5 +11,5 @@ export type ruleOptions = {
   options?: IRuleOptions, // 解析和渲染规则
   isReplace?: boolean, // 是否使用options直接替换所有规则
   titleList?: string[], // 标题列表
-  blankline?: () => string
+  newline?: () => string
 }

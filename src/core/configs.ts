@@ -1,5 +1,6 @@
 import { IRuleSpace, ITokenItem, IRuleOptionsInfo } from './iface';
-import { Token } from './token';
+import { toolbox } from '../utils/index';
+import { logger } from '../serve/logger';
 
 export const RULE_SPACE: IRuleSpace = {
   newline: '\n',
@@ -18,6 +19,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '#' + ruleSpace.space,
         end: ruleSpace.newline,
         render: (item: ITokenItem) => {
+          if (!item.isComple) { return ''; }
           return `<h1><a name="title-${item.id}"></a>${item.value}</h1>`
         },
       },
@@ -25,6 +27,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '##' + ruleSpace.space,
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
           return `<h2><a name="title-${item.id}"></a>${item.value}</h2>`
         },
       },
@@ -32,6 +35,8 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '###' + ruleSpace.space,
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
+
           return `<h3><a name="title-${item.id}"></a>${item.value}</h3>`
         },
       },
@@ -39,6 +44,8 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '####' + ruleSpace.space,
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
+
           return `<h4><a name="title-${item.id}"></a>${item.value}</h4>`
         },
       },
@@ -46,6 +53,8 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '#####' + ruleSpace.space,
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
+
           return `<h5><a name="title-${item.id}"></a>${item.value}</h5>`
         },
       },
@@ -53,6 +62,8 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '######' + ruleSpace.space,
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
+
           return `<h6><a name="title-${item.id}"></a>${item.value}</h6>`
         },
       },
@@ -60,6 +71,8 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '**',
         end: '**',
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
+
           return `<strong>${item.value}</strong>`
         },
       },
@@ -67,28 +80,35 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '~~',
         end: '~~',
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
+
           return `<i>${item.value}</i>`
-        },
-      },
-      spaceTwo: { // todo
-        start: '>',
-        end: ruleSpace.newline,
-        render: (item: ITokenItem) => {
-          return `${ruleSpace.space}${ruleSpace.space}${item.value}`
         },
       },
       lineStar: {
         start: '***',
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
-          return `<div class="line-star">${item.value}</div>`
+          if (!item.isComple) { return ''; }
+
+          if (item.children) {
+            return `***${item.value}`;
+          }
+
+          return `<div class="line-star"></div>`
         },
       },
       lineHorizontal: {
         start: '---',
         end: ruleSpace.newline,
         render: function (item: ITokenItem) {
-          return `<div class="line-horizotal">${item.value}</div>`
+          if (!item.isComple) { return ''; }
+
+          if (item.children) {
+            return `---${item.value}`;
+          }
+
+          return `<div class="line-horizotal"></div>`
         },
       },
       codeLine: {
@@ -96,6 +116,7 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         end: '```',
         isAtom: true,
         render: function (item: ITokenItem) {
+          if (!item.isComple) { return ''; }
           // https://github.com/highlightjs/highlight.js
           return `<pre><code>${item.value}</code></pre>`
         },
@@ -106,17 +127,11 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         isList: true,
         isBlock: true,
         render: function (item: ITokenItem) {
-          if (!item.isList) {
-            item.value = '';
-            item.children?.forEach((i) => {
-              item.value += i.value;
-            })
-            return `<ul>${item.value}</ul>`;
+          if (!item.isComple && !item.children) { return ''; }
+          if (!item.isComple) {
+            return `<li>${toolbox.getChildrenValue(item)}</li>`;
           }
-          if (item.children && item.children.length > 1) {
-            return `<li>${item.children[1].value}</li>`;
-          }
-          return `<li>${item.value}</li>`;
+          return `<ul>${item.value}</ul>`;
         }
       },
       list: { // 无序列表
@@ -125,28 +140,39 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         isList: true,
         isBlock: true,
         render: function (item: ITokenItem) {
-          if (!item.isList) {
-            item.value = '';
-            item.children?.forEach((i) => {
-              item.value += i.value;
-            })
-            return `<ol>${item.value}</ol>`;
+          if (!item.isComple && !item.children) { return ''; }
+          if (!item.isComple) {
+            return `<li>${toolbox.getChildrenValue(item)}</li>`;
           }
-          if (item.children && item.children.length > 1) {
-            return `<li>${item.children[1].value}</li>`;
-          }
-          return `<li>${item.value}</li>`;
+          return `<ol>${item.value}</ol>`;
         }
+      },
+      spaceTwo: { // todo
+        start: '> ',
+        end: ruleSpace.newline,
+        render: (item: ITokenItem) => { // 根据渲染需求渲染
+          if (!item.isComple && !item.children) { return ''; }
+          if (!item.isComple) {
+            return `<div class="card-item">${toolbox.getChildrenValue(item)}</div>`;
+          }
+          return `<div class="card">${item.value}</div>`;
+        },
       },
       link: {
         status: ['squareBrackets', 'brackets'],
         start: '',
         end: '',
         render: (item: ITokenItem) => {
-          if (item.children && item.children.length > 1 && item.tokenType !== 'end') {
-            return `<a target="_blank" href="${item.children[0].data}">${item.children[1].data}</a>`
+          if (!item.isComple) { return ''; }
+          if (!item.children ||item.children.length < 2) {
+            return item.value;
           }
-          return item.value;
+          try {
+            return `<a target="_blank" href="${item.children[0].data}">${item.children[1].data}</a>`
+          } catch (error) {
+            logger.log
+            return item.value           
+          }
         }
       },
       image: {
@@ -154,16 +180,25 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         status: ['exclSquareBrackets', 'brackets'],
         end: '',
         render: (item: ITokenItem) => {
-          if (item.children && item.children.length > 1 && !item.isBlock) {
-            return `<img src="${item.children[0].data}" title="${item.children[1].data}"/>`
+          if (!item.isComple) { return ''; }
+          if (!item.isComple) { return ''; }
+          if (!item.children ||item.children.length < 2) {
+            return item.value;
           }
-          return item.value;
+          try {
+            return `<img src="${item.children[0].data}" title="${item.children[1].data}">${item.children[1].data}</a>`
+          } catch (error) {
+            logger.log
+            return item.value           
+          }
         }
       },
       brackets: {
         start: '(',
         end: ')',
         render: (item: ITokenItem) => {
+          if (!item.isComple) { return ''; }
+
           item.data = item.value;
           return item.isBlock ? item.value : `(${item.value})`;
         }
@@ -172,6 +207,8 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '[',
         end: ']',
         render: (item: ITokenItem) => {
+          if (!item.isComple) { return ''; }
+
           item.data = item.value;
           return item.isBlock ? item.value : `[${item.value}]`;
         }
@@ -180,41 +217,48 @@ export const MD_NORMAL_BASE: IRuleOptionsInfo = {
         start: '![',
         end: ']',
         render: (item: ITokenItem) => {
+          if (!item.isComple) { return ''; }
+
           item.data = item.value;
           return `![${item.value}]`
         }
       },
-      table: {
+      tableCol: {
         start: '|',
-        end: '|' + ruleSpace.newline,
-        // isAtom: true,
+        end: ruleSpace.newline,
+        isAtom: true,
         isBlock: true,
         isList: true,
+        includeSelf: true,
         render: (item: ITokenItem) => {
-          let value = item.value;
-          if (!value) return ''
-          return item.value;
+          // <table border="1">
+          //   <tr>
+          //     <th>Month</th>
+          //     <th>Savings</th>
+          //   </tr>
+          //   <tr>
+          //     <td>January</td>
+          //     <td>$100</td>
+          //   </tr>
+          // </table>
+          if (!item.isComple) { return ''; }
+
+          try {
+            
+          } catch (error) {
+            console.error(error);
+            // error
+          }
         },
-      },
+      }
     }
   },
-  /**
-   * 所有节点渲染完毕后，对换行进行处理
-   * @param item 
-   * @param ruleSpace 
-   * @param isRootLine 是否根节点上的行
-   * @returns 
-   */
-  blankline: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => {
-    if (isRootLine && item.data === ruleSpace.newline) {
+  // root newline
+  newline: (item: ITokenItem) => {
+    if (item.isBlock && !item.children) {
       return '<div class="row-one"></div>';
     }
-    if (!item.isBlock ||
-      item.data === ruleSpace.newline ||
-      !item.children || item.isList) {
-        return '';
-    }
-    return `<div class="row">${item.value}</div>`;
+    return ''
   }
 }
 

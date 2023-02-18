@@ -26,7 +26,7 @@ export class Rules {
   public ruleMap: IRuleMap = {};
   public ruleEndMap: IRuleEndMap = {};
   public ruleStatus: IRuleMapStatus = {}
-  public blanklineFn: (item: ITokenItem, ruleSpace: IRuleSpace, isRootLine?: boolean) => string = () => {
+  public newline: (item: ITokenItem) => string = () => {
     return this.space.newline;
   }
   constructor () {}
@@ -36,13 +36,13 @@ export class Rules {
     let optionsInfo: IRuleOptionsInfo = this.docType === 'html' ? MD_NORMAL_BASE : MD_NORMAL_TEXT;
     this.options = optionsInfo.options(this.space);
     this.titleList = optionsInfo.titleList || [];
-    if (optionsInfo.blankline) { this.blanklineFn = optionsInfo.blankline;}
+    if (optionsInfo.newline) { this.newline = optionsInfo.newline;}
     // 2. 根据mdType确定是否需要添加配置
     if (this.mdType === 'ex') {
       let optionsInfoEx: IRuleOptionsInfo = this.docType === 'html' ? MD_EX_BASE : MD_EX_TEXT;
       this.titleList = optionsInfoEx.titleList ? optionsInfoEx.titleList : this.titleList;
       this.mergeOptions(this.options, optionsInfoEx.options(this.space));
-      if (optionsInfoEx.blankline) { this.blanklineFn = optionsInfoEx.blankline;}
+      if (optionsInfoEx.newline) { this.newline = optionsInfoEx.newline;}
     }
     // 3. 根据用户配置刷新最后的配置
     if (this.isReplace && this.customOptions) {
@@ -71,7 +71,7 @@ export class Rules {
     this.docType = rules.docType ? rules.docType : 'html';
     this.mdType = rules.mdType ? rules.mdType : 'normal';
     this.titleList = rules.titleList ? rules.titleList : this.titleList;
-    this.blanklineFn = rules.blankline ? rules.blankline : this.blanklineFn;
+    this.newline = rules.newline ? rules.newline : this.newline;
   }
   /**
    * wash rule options
@@ -104,6 +104,7 @@ export class Rules {
       isBlock: item.isBlock || false,
       key: key,
       isAtom: this.options[key].isAtom || false,
+      includeSelf: this.options[key].includeSelf || false,
       isList: false,
       status: item.status
     };
@@ -123,8 +124,11 @@ export class Rules {
       key: k,
       isAtom: this.options[k].isAtom || false,
       isList: this.options[k].isList || false,
+      includeSelf: this.options[k].includeSelf || false
     }
-    if (firstWord in this.ruleMap) {
+    if (firstWord === this.space.newline) {
+      // pass
+    } else if (firstWord in this.ruleMap) {
       this.ruleMap[firstWord].push(ruleInfo);
     } else {
       this.ruleMap[firstWord] = [ruleInfo];

@@ -1,12 +1,11 @@
 
-import { IRuleMap, ITokenItem, IRuleEndMap } from './iface';
+import { IRuleMap, ITokenItem, IRuleMapItem } from './iface';
 import { toolbox } from '../utils';
 import { Rules } from './rules';
 export class Token {
   public rules: Rules = new Rules();
   public document = '';
   private token: ITokenItem[] = [];
-  private tree: ITokenItem[] = [];
 
   constructor () {}
 
@@ -32,63 +31,54 @@ export class Token {
     // 上次扫描到的位置
     let lastPoint: number = 0;
     let atomDataNum = 0; // 标识是否设置autodata，第一次遇到要设置，第二次遇到要不设置
-    let atomData = ''; // autodata
+    // let atomData = ''; // autodata
+    let atomDataIsBlock = false;
+    let atomDataItem: IRuleMapItem|null = null;
     // 扫描文档流
     for (let i=0; i<this.document.length; i++) {
       let s = this.document[i];
 
-      if (s === this.rules.space.escape) {
-        i += 1;
-        lastPoint += 1;
-        continue;
-      } else if (s === this.rules.space.newline) {
-        if (lastPoint < i - 1) {
-          this.token.push({
-            id: toolbox.generateId(),
-            type: 'checked',
-            key: 'content',
-            data: this.document.substring(lastPoint, i),
-            isBlock: false,
-            isList: false,
-            value: '',
-            isComple: true
-          })
-        }
-        this.token.push(this.generateNewline(s));
-        lastPoint = i;
-        continue;
-      }
       // 生成token
       if (Object.prototype.hasOwnProperty.call(ruleMap, s)) {
         // 扫描规则，是否符合
         let rule = ruleMap[s];
         for (let j=0; j< rule.length; j++) {
           let docMayToken = this.document.substring(i, i+rule[j].len);
-          if (docMayToken !== rule[j].data && rule[j]?.status?.length === 0) {
+          if (docMayToken !== rule[j].data && !rule[j].status) {
             continue;
           }
+          
           // 等于的情况中，要挑出atom的情况，奇数进入原子期，期间直到找到下一个原子才能停止
-          if (rule[j].isAtom) {
-            atomDataNum += 1;
-            atomData = rule[j].data;
-          }
-          if (atomDataNum % 2 === 1 && (rule[j].data !== atomData)) {
+          if (rule[j].isAtom && rule[j].includeSelf && rule[j].data === atomDataItem?.data) {
             continue;
           }
-          // 存入之前的内容content
-          if (lastPoint < i - 1) {
+          if (rule[j].isAtom) {
+            atomDataItem = rule[j];
+            atomDataNum += 1;
+            atomDataIsBlock = rule[j].isBlock
+            lastPoint = this.generateContent(lastPoint, i);
+
             this.token.push({
               id: toolbox.generateId(),
-              type: 'checked',
-              key: 'content',
-              data: this.document.substring(lastPoint, i),
-              isBlock: false,
-              isList: false,
-              value: '',
-              isComple: true
+              type: rule[j].type,
+              data: docMayToken,
+              key: rule[j].key,
+              isBlock: rule[j].isBlock || false,
+              isList: rule[j].isList,
+              isComple: false,
+              value: ''
             })
-            lastPoint = i;
+            lastPoint = i + rule[j].len;
+            i = lastPoint - 1;
+            continue;
           }
+          if (atomDataNum % 2 === 1 && (rule[j].data !== atomDataItem?.data)) {
+            continue;
+          }
+          atomDataItem = null;
+          atomDataIsBlock = false;
+
+          lastPoint = this.generateContent(lastPoint, i);
           this.token.push({
             id: toolbox.generateId(),
             type: rule[j].type,
@@ -97,24 +87,32 @@ export class Token {
             isBlock: rule[j].isBlock || false,
             isList: rule[j].isList,
             isComple: false,
+            value: ''
           })
           lastPoint = i + rule[j].len;
           i = lastPoint - 1;
           break;
         }
+      } else {
+        if (s === this.rules.space.escape) {
+          lastPoint += this.rules.space.escape.length;
+          continue;
+        } else if (s === this.rules.space.newline) {
+          if (atomDataIsBlock) {
+            lastPoint = this.generateContent(lastPoint, i);
+            atomDataIsBlock = false;
+            atomDataNum = 0;
+            atomDataItem = null;
+          }
+              
+          lastPoint = this.generateContent(lastPoint, i);
+          this.token.push(this.generateNewline(s));
+          lastPoint = i + 1;
+          continue;
+        }
       }
     }
-    if (lastPoint < this.document.length) {
-      this.token.push({
-        type: 'checked',
-        data: this.document.substring(lastPoint, this.document.length),
-        key: 'content',
-        isBlock: false,
-        id: toolbox.generateId(),
-        isList: false,
-        isComple: true
-      })
-    }
+    lastPoint = this.generateContent(lastPoint, this.document.length);
     return this.token;
   }
 
@@ -127,6 +125,24 @@ export class Token {
       id: toolbox.generateId(),
       isList: false,
       isComple: false,
+      value: ''
     }
+  }
+
+  generateContent (lastPoint: number, i: number):number {
+    if (lastPoint < i - 1) {
+      this.token.push({
+        id: toolbox.generateId(),
+        type: 'checked',
+        key: 'content',
+        data: this.document.substring(lastPoint, i),
+        isBlock: false,
+        isList: false,
+        value: '',
+        isComple: true
+      })
+      return i;
+    }
+    return lastPoint;
   }
 }

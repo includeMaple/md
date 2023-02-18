@@ -20,7 +20,8 @@ export class TokenTree{
     for (let item of this.token) {
       if (this.isRaiseList(item)) {
         this.raiseList();
-      } else if (item.key === 'newline') {
+      }
+      if (item.key === 'newline') {
         this.newline(item);
       } else if (item.type === 'start' || item.type === 'checked') {
         this.start(item);
@@ -54,7 +55,6 @@ export class TokenTree{
         let children = [];
         let i = rule.status.length-1;
         let isOk = true;
-        let key = ''
 
         while (i >= 0) {
           let top = this.stack.pop();
@@ -64,7 +64,6 @@ export class TokenTree{
             this.stack.top = tempTop;
             break;
           }
-          key = top.key;
           children.unshift(top)
           i--;
         }
@@ -77,7 +76,8 @@ export class TokenTree{
             isBlock: rule.isBlock,
             isList: false,
             isComple: true,
-            children
+            children,
+            value: ''
           })
           return;
         }
@@ -109,7 +109,8 @@ export class TokenTree{
           isBlock: true,
           isComple: true,
           isList: false,
-          children: children
+          children: children,
+          value: ''
         });
         break;
       } else if (top.isBlock && top.type === 'start') {
@@ -122,10 +123,12 @@ export class TokenTree{
           isBlock: true,
           isComple: !top.isList,
           isList: top.isList,
-          children: children
+          children: children,
+          value: ''
         })
         break;
       } else if (top.isBlock) {
+        this.stack.top += 1;
         this.stack.push({
           id: toolbox.generateId(),
           type: 'checked',
@@ -134,14 +137,14 @@ export class TokenTree{
           isBlock: true,
           isComple: true,
           isList: false,
-          children: children
+          children: children,
+          value: ''
         });
         break;
       }
       children.unshift(top);
     }
   }
-
 
   /**
    * 判断两个节点是否匹配
@@ -150,9 +153,7 @@ export class TokenTree{
    */
   isStartNode (start: ITokenItem, end: ITokenItem): boolean {
     // 以换行符结尾的单行内容
-    if (this.rules.ruleEndMap[start.key]?.indexOf(this.rules.space.newline) > -1) {
-      return true;
-    } else if (start.type === 'start' && end.type === 'end'  && this.rules.ruleEndMap[start.key]?.indexOf(end.data) > -1) {
+    if (start.type === 'start' && end.type === 'end'  && this.rules.ruleEndMap[start.key]?.indexOf(end.data) > -1) {
       return true;
     } else if (start.type === 'start' && end.type === 'end' && start.key === end.key) {
       return true;
@@ -188,6 +189,7 @@ export class TokenTree{
     while (true) {
       let top = this.stack.pop();
       if (!top || !top.isList) {
+        this.stack.top += 1;
         if (children.length > 0) {
           this.stack.push({
             type: 'checked',
@@ -197,7 +199,8 @@ export class TokenTree{
             isBlock: tempTopItem.isBlock,
             isList: true,
             isComple: true,
-            children
+            children,
+            value: ''
           })
         }
         return;
@@ -234,8 +237,24 @@ export class TokenTree{
           isBlock: item.isBlock,
           isList: item.isList, // todo
           children,
-          isComple: !top.isList // todo
+          isComple: !top.isList, // todo
+          value: ''
         })
+        break;
+      } else if (top.isBlock) {
+        this.stack.top += 1;
+        this.stack.push(item);
+        // this.stack.push({
+        //   id: toolbox.generateId(),
+        //   type: 'checked',
+        //   key: top.key,
+        //   data: '',
+        //   isBlock: item.isBlock,
+        //   isList: item.isList, // todo
+        //   children,
+        //   isComple: !top.isList, // todo
+        //   value: ''
+        // })
         break;
       }
       children.unshift(top);

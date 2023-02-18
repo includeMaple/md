@@ -35,9 +35,7 @@ export class Render {
     return res;
   }
 
-  setRules (rules: Rules) {
-    this.rules = rules;
-  }
+  setRules (rules: Rules) { this.rules = rules; }
 
   /**
    * 获得子节点信息
@@ -58,14 +56,52 @@ export class Render {
    * @return string
    */
   private renderItem (item: ITokenItem) {
-    // 非叶子节点并且配置渲染方式的内容
-    if (item.children && (item.key in this.rules.options || item.key === 'content')) {
-      item.value = this.getChildrenValue(item)
-      let renderFn = this.rules.options[item.key]?.render || DEFAULT_RENDER_FN;
-      item.value = renderFn(item);
-    } else if (item.tokenType === 'content') {
-      item.value = item.data || '';
+    if (item.key === 'root') {
+      this.renderRoot(item);
+      return;
     }
-    item.value = this.rules.blanklineFn(item, this.rules.space, item.isRootLine) ? this.rules.blanklineFn(item, this.rules.space, item.isRootLine) : item.value;
+    if (item.key === 'content') {
+      this.renderContent(item);
+      return;
+    }
+    if (item.key === 'newline') {
+      this.renderNewline(item);
+    }
+    if (item.isComple && item.children) {
+      item.value = this.getChildrenValue(item);
+    }
+    let renderFn = this.rules.options[item.key]?.render;
+    if (!renderFn) { return; }
+    item.value = renderFn(item);
+  }
+
+  /**
+   * 渲染内容
+   * @param item 
+   */
+  private renderContent (item: ITokenItem) {
+    // 叶子结点
+    if (!item.children) {
+      item.value = item.data;
+      return;
+    }
+    item.value = this.getChildrenValue(item);
+  }
+
+  private renderNewline (item: ITokenItem) {
+    if (this.rules.newline) {
+      item.value = this.rules.newline(item)
+    }
+    if (item.children) {
+      item.value = this.getChildrenValue(item);
+    }
+  }
+
+  private renderRoot (item: ITokenItem) {
+    if (item.children) {
+      item.value = this.getChildrenValue(item);
+      return;
+    }
+    item.value = '';
   }
 }
